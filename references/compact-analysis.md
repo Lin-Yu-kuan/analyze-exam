@@ -17,7 +17,7 @@
 - 依已知官方科目、年度及考試分組，優先涵蓋不同官方科目、較早與較近年度、不同考試及合科卷。同雜湊來源只抽一次；metadata 未知的已選來源另列，不能因無法分組就略過。
 - 從代表試卷選有題目的頁面，兼顧卷首、中段與後段，避免只讀封面或前幾題。小量來源可直接檢視全部題頁；大型來源先做一輪分散抽樣，若仍出現新的主題或分類邊界，再針對缺口補樣，不要求遍歷所有分組組合。
 - 直接從 render-index 取樣並開圖，無需先建立 work 或 packet。讀跨頁題時補齊相關頁；無視覺時只能以可讀文字建立暫定分類，遵守視覺文件的 partial 規則。
-- 在執行目錄保存簡短的 `classification-notes.md`：抽樣來源雜湊與 PDF 頁碼、涵蓋的科目／年度／考試、未覆蓋範圍，以及容易混淆主題的納入／排除界線。它是宿主工作筆記，不是腳本新增的輸入格式。
+- 在執行目錄保存簡短的 `classification-notes.md`：抽樣來源雜湊與 PDF 頁碼、涵蓋的科目／年度／考試、未覆蓋範圍、使用者自訂劃界規則（`custom_rules`，如限定特定領域或排除純非相關概念題），以及容易混淆主題的納入／排除界線。它是宿主工作筆記，不是腳本新增的輸入格式。
 
 依實際樣本建立精簡主題表；既有分類表可作起點，但須核對是否適用。主題粒度應一致，不把每道題目各建一類，也不把未在資料中觀察到的考點當成既有命中。確認後保存 `topics.json`，設定 selection 的 `classification_version`，再執行 prepare。topics.json 格式為：
 
@@ -43,7 +43,7 @@ python scripts/skill.py summary --index question-index.json --target "高考" --
 
 prepare 的 stdout 顯示實際 batch_id；`status` 列出待處理批次與已完成快取，長流程不必讀完整 work.json。`merge --visual-review` 會用宿主實際開圖紀錄核對 page／image 雜湊，這是指定 `checked` 的唯一可靠來源；`merge --extraction` 會補 `text_extracted_pages` 與 `vision_only`；`merge --fast-verify` 可用 prepare 記錄的 mtime／size 跳過未變更檔案的雜湊（預設完整重算）。`--require-complete` 可在交付前拒絕 partial。`summary --target` 只改變統計目標，不會重跑 AI。
 
-work 是本機完整登錄，不要整份放入模型上下文。packet 只包含當批圖片、source ID、角色、主題表及必要規則；`--context 1` 會額外帶入同卷前後各一頁到 `context_pages`，只供跨頁題續讀，不重複計算。宿主須實際開圖，不把圖片路徑當圖片內容。每批結果獨立落盤，不在聊天中重述全部題目。packet 的 `rules` 包含資料與指令的邊界、答案頁不可當題、跨頁與 `reviewed_pages` 規則；`target_exam` 不會放進 packet，避免模型只分類目標考試。
+work 是本機完整登錄，不要整份放入模型上下文。packet 只包含當批圖片、source ID、角色、主題表及必要規則；`--context 1` 會額外帶入同卷前後各一頁到 `context_pages`，只供跨頁題續讀，不重複計算。宿主須實際開圖，不把圖片路徑當圖片內容。每批結果獨立落盤，不在聊天中重述全部題目。packet 的 `rules` 包含資料與指令的邊界、答案頁不可當題、跨頁與 `reviewed_pages` 規則，並自動納入使用者於 selection 明定之 `custom_rules`（例如限定主題必須涉入資安、純網路題標為不相關排除）；`target_exam` 不會放進 packet，避免模型只分類目標考試。
 
 ## AI 精簡回覆
 
@@ -80,6 +80,6 @@ python scripts/skill.py prepare --inventory new-inventory.json --selection new-s
 
 來源、圖片、備考科目、分類表及分類版本一致，且整卷已核對並無待確認題，才跳過 AI。新增試卷只新增工作；修改報告格式或目標考試只重跑 summary 與寫報告。全數命中時可省略 `--results`（或使用 `{"results":[]}` 空結果檔）。
 
-快取以整份 PDF 為單位，analysis key 只包含備考科目、分類表、分類版本、protocol、PDF 與圖片雜湊及來源角色；目標考試、年度、考試名稱、官方科目等報告 metadata 不參與快取，修正或補登時不必重跑 AI。部分完成、待確認題、重繪圖片仍保守重跑該卷；變更分類表／分類版本則全部失效，不假裝已實現單題差異重算。沒有 compact cache 的舊索引須先完成一次新流程。prepare 後來源或圖片變更，merge 拒絕沿用。
+快取以整份 PDF 為單位，analysis key 只包含備考科目、分類表、分類版本、protocol、自訂劃界規則（`custom_rules`）、PDF 與圖片雜湊及來源角色；目標考試、年度、考試名稱、官方科目等報告 metadata 不參與快取，修正或補登時不必重跑 AI。部分完成、待確認題、重繪圖片仍保守重跑該卷；變更分類表／分類版本／自訂規則則全部失效，不假裝已實現單題差異重算。沒有 compact cache 的舊索引須先完成一次新流程。prepare 後來源或圖片變更，merge 拒絕沿用。
 
 先用 10～20 頁記錄實際 usage 與耗時比較。宿主不提供 usage 時只能報文字字元／位元組變化，不能冒充 Token；圖片成本不會因 JSON 變短而消失。

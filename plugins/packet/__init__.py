@@ -32,9 +32,13 @@ class PacketPlugin(StagePlugin):
             before = all_pages[max(0, min(positions) - context):min(positions)]
             after = all_pages[max(positions) + 1:max(positions) + 1 + context]
             context_numbers = [page for page in [*before, *after] if page not in batch_pages]
+        rules = list(RULES)
+        custom_rules = work.get("config", {}).get("custom_rules", [])
+        if custom_rules:
+            rules.extend([f"自訂劃界規則：{r}" for r in custom_rules])
         return {"study_subject": work["config"]["study_subject"], "topics": work["config"]["topics"],
                 "source_roles": sorted({r.get("role") or "unknown" for r in source["refs"]}),
-                "rules": list(RULES), "max_sample_chars": MAX_SAMPLE_CHARS, **batch,
+                "rules": rules, "max_sample_chars": MAX_SAMPLE_CHARS, **batch,
                 "context_pages": [{"p": page, "image": source["pages"][str(page)]["image"], "role": "context"}
                                    for page in context_numbers],
                 "reply": "results:[{source,reviewed_pages,questions:[{p,q,r,t}]}]；c/u 加 why，跨頁加 pages，父題加 count:false。可選 answers、duplicate_of、sample。"}

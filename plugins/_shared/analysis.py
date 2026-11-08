@@ -86,9 +86,17 @@ def _normalise_ref(item: dict[str, Any], path: Path, root: Path) -> dict[str, An
 
 def _analysis_config(selection: dict[str, Any], topics: list[dict]) -> dict[str, Any]:
     """只放會改變分類結果的設定；target_exam 與來源 metadata 不參與分析快取。"""
-    return {"protocol": PROTOCOL, "study_subject": selection["study_subject"],
-            "classification_version": selection["classification_version"],
-            "topics": topics, "mode": "compact"}
+    config: dict[str, Any] = {"protocol": PROTOCOL, "study_subject": selection["study_subject"],
+                              "classification_version": selection["classification_version"],
+                              "topics": topics, "mode": "compact"}
+    custom_rules = selection.get("custom_rules")
+    if custom_rules:
+        if isinstance(custom_rules, str):
+            custom_rules = [custom_rules]
+        clean_rules = [str(r).strip() for r in custom_rules if str(r).strip()]
+        if clean_rules:
+            config["custom_rules"] = clean_rules
+    return config
 
 def validate_target(target: Any) -> None:
     if target is None or isinstance(target, str):

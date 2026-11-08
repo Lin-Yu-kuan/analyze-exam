@@ -34,6 +34,10 @@ root、files、contents、warnings。files 每筆有 path、relative_path（`/` 
   "study_subject": "資料結構",
   "target_exam": null,
   "classification_version": "1",
+  "custom_rules": [
+    "分類出的主題必須牽涉到資安，不能是純網路的概念當主題",
+    "若是純網路題，完全沒提到資安概念⇒判定為不相關(r=i)，不納入主題與分析"
+  ],
   "selected_sources": [
     {
       "path": "D:/題庫/合科/試題.pdf",
@@ -50,7 +54,7 @@ root、files、contents、warnings。files 每筆有 path、relative_path（`/` 
 }
 ```
 
-relative_path 直接複製 inventory 對應檔案的值，新建 selection 一律填寫；只有 path 的舊 selection 仍相容，但題庫搬移後須補上 relative_path。path 可選，寫入時為當下絕對路徑。未知 metadata 寫 null。`classification_version` 是 compact 分析必填。同一檔案可有多個來源事件，保留多筆 selected_sources；工具依 relative_path（或 path）＋sha256 驗證選取及去重。role 可為 question、official_answer、corrected_answer、unknown；答案角色由可靠來源確認，未知不自動套用。
+relative_path 直接複製 inventory 對應檔案的值，新建 selection 一律填寫；只有 path 的舊 selection 仍相容，但題庫搬移後須補上 relative_path。path 可選，寫入時為當下絕對路徑。未知 metadata 寫 null。`classification_version` 是 compact 分析必填。`custom_rules` 為可選字串陣列（使用者自訂範疇劃界與排除規則），會納入 `config_hash` 分析快取指紋與工作包 rules。同一檔案可有多個來源事件，保留多筆 selected_sources；工具依 relative_path（或 path）＋sha256 驗證選取及去重。role 可為 question、official_answer、corrected_answer、unknown；答案角色由可靠來源確認，未知不自動套用。
 
 ## extraction.json（工具生成）
 
@@ -58,7 +62,7 @@ tool_version、pypdf_version、page_scope、documents。每筆 document 包含 s
 
 ## question-index.json（宿主分析生成，schema 3）
 
-- schema_version、study_subject、target_exam、classification_version、config_hash、source_root、warnings。
+- schema_version、study_subject、target_exam、classification_version、custom_rules（若有提供）、config_hash、source_root、warnings。
 - status：partial／complete；coverage：見下方。
 - topics：穩定 topic_id、label、parent_id。
 - questions：question_id、content_sha256、pages、question_number、parent_question_id（可省略）、countable、summary、relevance、topic_ids、reason、evidence_excerpt（可省略）、source_refs、answer_refs、duplicate_candidates、score（可選）、analysis_status、visual_status、interpretation_method、image_evidence。

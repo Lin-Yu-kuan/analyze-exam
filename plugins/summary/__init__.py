@@ -71,25 +71,28 @@ class SummaryPlugin(StagePlugin):
                                          "official_subject": ref.get("official_subject"), "year": ref.get("year"),
                                          "exam_name": ref.get("exam_name"),
                                          "link": _report_link(root, ref.get("relative_path"), link_base)}
-        return {"schema_version": SUMMARY_SCHEMA, "study_subject": index["study_subject"], "target_exam": target,
-                "source_root": root, "source_files": list(source_files.values()),
-                "status": index["status"], "coverage": index["coverage"],
-                "unique_related_questions": len(related),
-                "supplemental_related_questions": len(all_related) - len(related),
-                "pending_questions": sum(q.get("analysis_status") != "completed" for q in countable),
-                "irrelevant_questions": sum(q.get("analysis_status") == "completed" and q["relevance"] == "irrelevant"
-                                            for q in countable),
-                "uncertain_questions": sum(q["relevance"] == "uncertain" for q in countable),
-                "unreadable_questions": sum(q.get("analysis_status") == "unreadable" for q in countable),
-                "duplicate_candidate_count": sum(len(q.get("duplicate_candidates", [])) for q in countable),
-                "answer_pair_count": sum(len(q.get("answer_refs", [])) for q in countable),
-                "event_count": None,
-                "event_note": "未建立命題事件對應；年度考試分層不等於事件數。",
-                "topics": [{"topic_id": t["topic_id"], "label": t.get("label", t["topic_id"]),
-                            "count": hits[t["topic_id"]], "examples": samples[t["topic_id"]]} for t in index["topics"]],
-                "by_year_exam": by_year,
-                "notes": ["主題可多標籤，合計可能超過相關題數。",
-                          "年度考試分層不是獨立命題事件計數；未知年份或考試保留 null。"]}
+        summary_data = {"schema_version": SUMMARY_SCHEMA, "study_subject": index["study_subject"], "target_exam": target,
+                        "source_root": root, "source_files": list(source_files.values()),
+                        "status": index["status"], "coverage": index["coverage"],
+                        "unique_related_questions": len(related),
+                        "supplemental_related_questions": len(all_related) - len(related),
+                        "pending_questions": sum(q.get("analysis_status") != "completed" for q in countable),
+                        "irrelevant_questions": sum(q.get("analysis_status") == "completed" and q["relevance"] == "irrelevant"
+                                                    for q in countable),
+                        "uncertain_questions": sum(q["relevance"] == "uncertain" for q in countable),
+                        "unreadable_questions": sum(q.get("analysis_status") == "unreadable" for q in countable),
+                        "duplicate_candidate_count": sum(len(q.get("duplicate_candidates", [])) for q in countable),
+                        "answer_pair_count": sum(len(q.get("answer_refs", [])) for q in countable),
+                        "event_count": None,
+                        "event_note": "未建立命題事件對應；年度考試分層不等於事件數。",
+                        "topics": [{"topic_id": t["topic_id"], "label": t.get("label", t["topic_id"]),
+                                    "count": hits[t["topic_id"]], "examples": samples[t["topic_id"]]} for t in index["topics"]],
+                        "by_year_exam": by_year,
+                        "notes": ["主題可多標籤，合計可能超過相關題數。",
+                                  "年度考試分層不是獨立命題事件計數；未知年份或考試保留 null。"]}
+        if index.get("custom_rules"):
+            summary_data["custom_rules"] = index["custom_rules"]
+        return summary_data
 
     def run(self, value: StageInput) -> StageResult:
         r = request_of(value)

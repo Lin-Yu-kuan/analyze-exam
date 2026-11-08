@@ -487,6 +487,31 @@ class PortablePathTests(unittest.TestCase):
         self.assertTrue(important_index.exists())
         self.assertTrue(pdf_file.exists())
 
+    def test_custom_rules_in_packet_and_cache_invalidation(self) -> None:
+        work1 = self.work()
+        self.assertNotIn("custom_rules", work1["config"])
+
+        # 新增自訂規則，驗證 config_hash 改變（快取失效）
+        self.selection["custom_rules"] = [
+            "分類出的主題必須牽涉到資安，不能是純網路的概念當主題",
+            "若是純網路題，完全沒提到資安概念⇒不納入分析",
+        ]
+        work2 = self.work()
+        self.assertIn("custom_rules", work2["config"])
+        self.assertEqual(len(work2["config"]["custom_rules"]), 2)
+        self.assertNotEqual(work1["config_hash"], work2["config_hash"])
+
+        # 驗證 packet 正確注入自訂規則
+        packet = compact.packet(work2, work2["batches"][0]["batch_id"])
+        self.assertTrue(any("資安" in r and "自訂劃界規則" in r for r in packet["rules"]))
+        self.assertTrue(any("純網路題" in r for r in packet["rules"]))
+
+        # 驗證 merge 與 summary 順暢傳遞 custom_rules
+        index = compact.merge(work2, self.results(work2), self.visual_review())
+        self.assertEqual(index.get("custom_rules"), self.selection["custom_rules"])
+        summary = compact.summarize(index)
+        self.assertEqual(summary.get("custom_rules"), self.selection["custom_rules"])
+
 
 if __name__ == "__main__":
     unittest.main()
