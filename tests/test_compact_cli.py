@@ -15,8 +15,16 @@ from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 HAS_PIL = importlib.util.find_spec("PIL") is not None
 HAS_PDFIUM = importlib.util.find_spec("pypdfium2") is not None
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
-EXAM = SCRIPTS / "exam_files.py"
-COMPACT = SCRIPTS / "compact_analysis.py"
+EXAM = SCRIPTS / 'skill.py'
+COMPACT = SCRIPTS / 'skill.py'
+
+
+from plugin_support import make_services, format_check_report
+services = make_services()
+unittest.addModuleCleanup(services.close)
+tool = services.tool
+compact = services.compact
+renderer = services.renderer
 
 
 def make_pdf(path: Path) -> None:

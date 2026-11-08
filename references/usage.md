@@ -1,10 +1,10 @@
 # 安裝與工具使用
 
-大量題庫預設採 [精簡考點分析](compact-analysis.md)，另有純標準函式庫的 `scripts/compact_analysis.py` 提供 prepare／packet／status／merge／summary。AI 不重複填寫來源欄位，統計與分析快取在本機處理；原有 inventory／extract／render 介面保持相容。
+大量題庫預設採 [精簡考點分析](compact-analysis.md)，另有純標準函式庫的 `scripts/skill.py` 提供 prepare／packet／status／merge／summary。AI 不重複填寫來源欄位，統計與分析快取在本機處理；inventory／extract／render 的參數語意保留，但舊 Python 腳本入口已移除，請改用下列統一入口。
 
 ## 安裝
 
-整個 `analyze-exam-subject` 資料夾可直接攜帶，不匯入爬蟲程式碼。從原始套件複製，保留 scripts 與 references 相對結構；不要只複製 SKILL.md。安裝前檢查目標是否已有同名版本，勿盲目覆寫。
+整個 `analyze-exam-subject` 資料夾可直接攜帶，不匯入爬蟲程式碼。從原始套件複製，保留 core、interfaces、plugins（含 report_html/template.html）、scripts 與 references 的相對結構；不要只複製 SKILL.md。安裝前檢查目標是否已有同名版本，勿盲目覆寫。
 
 - Antigravity 專案範圍：`<專案>/.agents/skills/analyze-exam-subject/`。官方目前預設 `.agents/skills`，並相容舊 `.agent/skills`。參考 https://antigravity.google/docs/skills?app=antigravity-ide （2026-11-02 查核）。
 - Codex 個人範圍：`$CODEX_HOME/skills/analyze-exam-subject/`；未設定 CODEX_HOME 時使用 `~/.codex/skills/analyze-exam-subject/`。
@@ -13,26 +13,48 @@
 
 ## 環境
 
-Python 3.10+；盤點只用標準函式庫。PDF 擷取需要 pypdf。缺少時，先提示使用者在選定環境執行 `python -m pip install pypdf`，不靜默安裝。無 OCR 引擎或宿主視覺能力時，掃描頁只能回報待視覺檢查。所有命令中的路徑請加引號；以下以技能資料夾為目前目錄。完整依賴見 [`requirements.txt`](../requirements.txt)：`pypdf>=6,<7`、`pypdfium2>=5,<6`、`Pillow>=10.1`。
+Python 3.10+；盤點只用標準函式庫。PDF 擷取需要 pypdf。缺少時，先提示使用者在選定環境執行 `python -m pip install pypdf`，不靜默安裝。無 OCR 引擎或宿主視覺能力時，掃描頁只能回報待視覺檢查。所有命令中的路徑請加引號；以下以技能資料夾為目前目錄；從其他目錄執行時，請將 scripts/skill.py 換成技能內該檔的絕對路徑。完整依賴見 [`requirements.txt`](../requirements.txt)：`pypdf>=6,<7`、`pypdfium2>=5,<6`、`Pillow>=10.1`。
 
 逐頁圖片功能需要 `pypdfium2` 與 `Pillow`；缺少時提示 `python -m pip install pypdfium2 Pillow`，不自動安裝。圖片產生不需要視覺模型；判讀需要宿主實際提供圖片工具。無視覺時保留文字分析與待檢視圖片，不使用外部 OCR API。參閱 [視覺檢查及 render 指令](visual-review.md)。
+
+## 統一入口與分段管線
+
+2.0.0 只保留 `python scripts/skill.py <command> ...`；沒有舊版轉接層。
+可用命令：run-dir、inventory、extract、render、prepare、packet、status、merge、summary、report-html、check、clean-images，以及 scan、finalize、revise。
+命令啟動時只載入所需插件及依賴，完成或失敗後反向卸載；資料透過明確回傳值傳遞，事件只用於通知。
+
+```shell
+python scripts/skill.py scan "D:/題庫" --subject "資料結構"
+python scripts/skill.py finalize --run-dir "D:/題庫/_analysis/資料結構/本次" --results result-001.json result-002.json --visual-review visual-review.json --require-complete
+python scripts/skill.py report-html --run-dir "D:/題庫/_analysis/資料結構/本次"
+python scripts/skill.py check "D:/題庫/_analysis/資料結構/本次/report.html"
+```
+
+- `scan` 依序建立唯一目錄、盤點，stdout 回傳 JSON，含 `run_dir` 與 `inventory`；支援 `--manifest` 與 `--output-root`。尚未確認備考科目時可先用「盤點」作工作目錄名稱。
+- 盤點後宿主與使用者確認 selection；渲染後宿主看圖建立 topics；prepare／packet 產生工作包後，宿主逐批保存 results 與 visual-review。命令成功不代表 AI 已完成判讀。
+- `finalize` 依序執行 merge／summary，讀取 run-dir 下的 work.json；可用 `--work` 改指定。未明確指定 visual-review 或 extraction 時，僅採用同一 run-dir 已存在的對應檔案。
+- results 必須明確列出，不掃描猜測結果檔；全部命中有效快取時才可不提供。保留 `--fast-verify`、`--require-complete`、`--target` 與 `--examples` 語意。
+- finalize 固定寫出同目錄的 question-index.json 與 summary.json，開始前先確認兩者都不存在。任一步驟失敗即停止，已完成成果保留，不回滾；例如合併成功但統計失敗，可使用 summary 子命令接續。
+- 宿主依 summary 撰寫 report.md；只在使用者要求時呼叫 report-html。revise 只使用既有成果，不重新盤點、看圖或分類。
+- 保留來源唯讀、雜湊快取及既有資料 schema；不新增工作流狀態檔或自動 resume 排程。
+- 成功回傳 0；一般失敗或參數錯誤回傳 2，check 健檢失敗回傳 1。錯誤寫入 stderr。
 
 ## 執行目錄
 
 先建立唯一目錄，避免不同次分析互相覆寫；命令會印出實際路徑，後續輸出都放在該目錄：
 
 ```shell
-python scripts/exam_files.py run-dir "D:/題庫" --subject "資料結構"
-python scripts/exam_files.py run-dir "D:/題庫" --subject "資料結構" --output-root "D:/分析輸出"
+python scripts/skill.py run-dir "D:/題庫" --subject "資料結構"
+python scripts/skill.py run-dir "D:/題庫" --subject "資料結構" --output-root "D:/分析輸出"
 ```
 
 工具會清理 `<>:"/\|?*`、控制字元、尾端句點與 Windows 保留名稱（`CON`、`NUL`、`COM1` 等），並使用時間戳加隨機碼。未指定 `--output-root` 時輸出根目錄固定在來源的 `_analysis` 下；來源唯讀時用外部可寫入根目錄，工具仍會拒絕連結目錄。
 
 ```shell
-python scripts/exam_files.py inventory "D:/題庫" --output "D:/題庫/_analysis/盤點/inventory.json"
-python scripts/exam_files.py inventory "D:/題庫" --manifest "D:/下載記錄/manifest.sqlite3" --output "D:/題庫/_analysis/盤點/inventory-with-metadata.json"
-python scripts/exam_files.py extract --inventory "D:/題庫/_analysis/盤點/inventory.json" --pages 1 --output "D:/題庫/_analysis/盤點/headers.json"
-python scripts/exam_files.py extract --inventory "D:/題庫/_analysis/盤點/inventory.json" --selection "D:/題庫/_analysis/資料結構/本次/selection.json" --output "D:/題庫/_analysis/資料結構/本次/extraction.json"
+python scripts/skill.py inventory "D:/題庫" --output "D:/題庫/_analysis/盤點/inventory.json"
+python scripts/skill.py inventory "D:/題庫" --manifest "D:/下載記錄/manifest.sqlite3" --output "D:/題庫/_analysis/盤點/inventory-with-metadata.json"
+python scripts/skill.py extract --inventory "D:/題庫/_analysis/盤點/inventory.json" --pages 1 --output "D:/題庫/_analysis/盤點/headers.json"
+python scripts/skill.py extract --inventory "D:/題庫/_analysis/盤點/inventory.json" --selection "D:/題庫/_analysis/資料結構/本次/selection.json" --output "D:/題庫/_analysis/資料結構/本次/extraction.json"
 ```
 
 `--pages` 為一基頁碼，以逗號分隔，例如 `1,2`；未提供代表全文。未提供 selection 時只允許首頁預覽，防止選取前擷取全部試卷。輸出以暫存檔原子發佈，必須是不存在的新檔，不覆寫來源。`--resume` 接受先前的 extraction.json，重用合格結果但仍輸出到新檔；render 的 `--resume` 接受 render-index.json，同一個 output 只允許相同選取、相同頁碼範圍與相同渲染設定恢復，否則請使用新輸出。渲染逐頁寫 append-only journal，文件結束才折回索引；圖片不覆寫。文字與渲染索引不可混用。
@@ -44,11 +66,11 @@ python scripts/exam_files.py extract --inventory "D:/題庫/_analysis/盤點/inv
 先完成 selection 與 render，再依 [精簡考點分析](compact-analysis.md) 跨來源抽樣建立分類表、設定分類版本，才執行 prepare。`prepare` 會檢查每個已選來源都有 render 索引、至少一頁可用；缺頁只會產生 warning 與 `missing_pages`，不會靜默假裝完整。`--no-cache` 可強制重跑，`--prior` 則重用完整快取。
 
 ```shell
-python scripts/compact_analysis.py prepare --inventory inventory.json --selection selection.json --render-index render-index.json --topics topics.json --output work.json
-python scripts/compact_analysis.py status --work work.json
-python scripts/compact_analysis.py packet --work work.json --batch-id "S來源短ID-1" --context 1 --output packet-001.json
-python scripts/compact_analysis.py merge --work work.json --results result-001.json --visual-review visual-review.json --extraction extraction.json --output question-index.json
-python scripts/compact_analysis.py summary --index question-index.json --target "高考" --output summary.json
+python scripts/skill.py prepare --inventory inventory.json --selection selection.json --render-index render-index.json --topics topics.json --output work.json
+python scripts/skill.py status --work work.json
+python scripts/skill.py packet --work work.json --batch-id "S來源短ID-1" --context 1 --output packet-001.json
+python scripts/skill.py merge --work work.json --results result-001.json --visual-review visual-review.json --extraction extraction.json --output question-index.json
+python scripts/skill.py summary --index question-index.json --target "高考" --output summary.json
 ```
 
 summary 請輸出到與 `report.md` 相同的執行目錄；它會依輸出位置計算相對於報告的考題連結（`link`）。執行目錄在題庫內（預設 `_analysis`）時連結隨題庫一起搬移仍有效；使用外部 `--output-root` 時 `link` 為 null，報告改以題庫相對路徑文字標示。
@@ -62,14 +84,14 @@ summary 請輸出到與 `report.md` 相同的執行目錄；它會依輸出位�
 
 ### 快速重新生成與報告健檢（-revise）
 
-當使用者已完成題庫分析，但修訂了 `report.md` 講義內容、微調了前端樣式、或更新了編譯器版本時，可使用 `--revise` 旗標快速重新生成 HTML 報告並進行完整度健檢，**無需重新執行任何考古題分析流程**：
+當使用者已完成題庫分析，但修訂了 `report.md` 講義內容、微調了前端樣式、或更新了編譯器版本時，可使用 Skill 的 `-revise` 模式（內部對應 `revise` 子命令）快速重新生成 HTML 報告並進行完整度健檢，**無需重新執行任何考古題分析流程**：
 
 ```shell
 # 傳入 _analysis 目錄（自動解析尋找最新成果目錄並編譯、健檢）
-python scripts/build_report_html.py --revise "D:/題庫/_analysis"
+python scripts/skill.py revise "D:/題庫/_analysis"
 
 # 傳入題庫根目錄亦可自動定位
-python scripts/build_report_html.py --revise "D:/題庫"
+python scripts/skill.py revise "D:/題庫"
 ```
 
 腳本會自動同步最新報告至題庫根目錄（`report.html` 與 `<備考科目>_考點分析報告.html`），並在終端機輸出結構化健檢卡片。
@@ -79,8 +101,8 @@ python scripts/build_report_html.py --revise "D:/題庫"
 分析完成後，`render-images/` 內的逐頁 PNG 圖檔（150 DPI 約每頁 500KB～700KB）不再參與日常閱讀與試題連結。若磁碟空間有限，可執行以下指令安全清理，只刪除暫存圖片，保留所有 JSON 索引與報告：
 
 ```shell
-python scripts/exam_files.py clean-images "D:/題庫/_analysis/資料結構/本次"
-python scripts/exam_files.py clean-images "D:/題庫"
+python scripts/skill.py clean-images "D:/題庫/_analysis/資料結構/本次"
+python scripts/skill.py clean-images "D:/題庫"
 ```
 
 由於 PDF 渲染為 100% 確定性（Deterministic），未來若有重新核對細節之需求，再次執行 `render` 即可恢復相同雜湊之圖片。

@@ -10,6 +10,17 @@
 
 ---
 
+## 2.0.0：插件版統一入口
+
+正式功能已全面遷入插件，舊分散 Python 腳本入口已移除，不保留雙版本。Skill 名稱與 `-revise` 使用方式不變；既有分析 JSON、快取與報告成果可繼續使用。
+
+```shell
+python scripts/skill.py scan "D:/題庫" --subject "資料結構"
+python scripts/skill.py revise "D:/題庫/_analysis"
+```
+
+程式使用微核心管理插件生命週期，Pipeline 串接確定性步驟；宿主 AI 在各段之間負責選取確認、看圖、分類與寫報告。完整命令見 [操作文件](references/usage.md)，開發邊界見 [插件架構](references/plugin-architecture.md)。
+
 ## 💡 為什麼需要這個 Skill？
 
 備考各類公職考試（如高考、普考、特考、國營事業）或升學證照時，許多考生手邊累積了大量歷屆考古題 PDF，但在整理考點與命題趨勢時常遇到難以克服的痛點：
@@ -33,7 +44,7 @@
    透過 `pypdfium2` 與 `Pillow` 高精度渲染試卷頁面，由宿主 AI 實際開圖核對題號、圖表與公式，絕不以純文字擷取矇混過關；無視覺能力時明確標記部分完成（Partial），誠實揭露審查邊界。
 
 3. **⚡ 精簡考點分析（Compact Analysis，抗 Token 膨脹）**  
-   內建純 Python 標準函式庫處理工具（`compact_analysis.py`）。以每批 5 頁的最小 Packet 切分任務，配合前向／後向上下文緩衝跨頁題，逐批分析並在本地磁碟即時落盤快取，對話框絕不重複轉錄數百道題目。
+   內建純 Python 標準函式庫處理工具（`scripts/skill.py` 與分析插件）。以每批 5 頁的最小 Packet 切分任務，配合前向／後向上下文緩衝跨頁題，逐批分析並在本地磁碟即時落盤快取，對話框絕不重複轉錄數百道題目。
 
 4. **📊 嚴謹統計與資料契約（去重與命題事件精算法）**  
    嚴格區分**「唯一練習題數」**、**「主題命中數」**與**「命題事件數」**：
@@ -53,15 +64,21 @@
 
 ```mermaid
 flowchart TD
-    A["📁 本機題庫 PDF 資料夾"] --> B["1. run-dir & inventory<br/>（建立執行目錄、盤點試題）"]
-    B --> C["2. 確立備考科目與來源選取<br/>（保存 selection.json）"]
-    C --> D["3. render 試卷頁面<br/>（PDF 渲染為高解析圖片）"]
-    D --> E["4. 跨來源抽樣 ＆ 建立分類表<br/>（定義 topics.json 與界線）"]
-    E --> F["5. prepare 批次排程<br/>（生成 work.json 與分批 packet）"]
-    F --> G["6. 逐批 visual-review 與回覆<br/>（開圖識別、標註主題、即時落盤）"]
-    G --> H["7. merge 合併與驗證<br/>（補齊來源、產生 question-index.json）"]
-    H --> I["8. summary 多維統計<br/>（依目標考試分層、產生 summary.json）"]
-    I --> J["📑 產出最終備考分析報告<br/>（report.md）"]
+    A[使用者提供題庫與需求] --> B[CLI 插件：解析命令]
+    B --> C[組裝入口：載入所需插件與 Pipeline]
+    C --> D[scan：Workspace → Inventory]
+    D --> E[宿主與使用者確認 selection]
+    E --> F[Render 插件：渲染選取頁面]
+    F --> G[宿主看圖抽樣，建立 topics]
+    G --> H[Prepare → Packet 插件]
+    H --> I[宿主逐批看圖、分類、保存結果]
+    I -->|下一批| H
+    I --> J[finalize：Merge → Summary]
+    J --> K[宿主撰寫 report.md]
+    K -->|要求 HTML| L[Report HTML 插件]
+    C -->|revise| M[Workspace 定位 → Report HTML → Report Check]
+    L --> N[完成或失敗後反向卸載]
+    M --> N
 ```
 
 ---
@@ -83,20 +100,34 @@ flowchart TD
 
 ```text
 analyze-exam-subject/
-├── SKILL.md                 # 核心技能定義與工作指令（含自動更新規範）
-├── README.md                # 技能完整說明文件（當前檔案）
-├── requirements.txt         # 核心依賴（pypdf, pypdfium2, Pillow）
-├── references/              # 規範與作業指引文件
-│   ├── compact-analysis.md  # 精簡考點分析流程與快取規範
-│   ├── output-contract.md   # 資料契約（JSON Schema 與欄位定義）
-│   ├── report-template.md   # 最終報告結構與撰寫模板
-│   ├── usage.md             # CLI 工具完整參數與安裝指南
-│   └── visual-review.md     # 視覺檢查機制與覆蓋率標準
-├── scripts/                 # 本地純 Python 工具鏈
-│   ├── exam_files.py        # 盤點、文字擷取與執行目錄管理
-│   ├── pdf_render.py        # 試卷頁面高解析度渲染工具
-│   └── compact_analysis.py  # 精簡分析管線（prepare, packet, merge, summary）
-└── tests/                   # 單元測試與驗證套件
+├── SKILL.md                 # 宿主 AI 指引與插件命令交接
+├── README.md
+├── requirements.txt
+├── core/                    # 註冊、生命週期與事件，沒有業務邏輯
+├── interfaces/              # Plugin Protocol、階段資料與注入能力
+├── plugins/                 # 各能力的獨立插件
+│   ├── _shared/             # 無副作用的共用函式與生命週期輔助
+│   ├── cli/                 # 命令解析與終端呈現
+│   ├── pipeline/            # 同步循序執行
+│   ├── workspace/           # 成果目錄與儲存能力
+│   ├── manifest_sqlite/     # 已知 schema 的唯讀 manifest
+│   ├── inventory/           # 盤點
+│   ├── extract/             # 文字擷取
+│   ├── render/              # 圖片渲染與續跑
+│   ├── prepare/             # 批次與快取規劃
+│   ├── packet/              # AI 工作包
+│   ├── status/              # 工作進度
+│   ├── merge/               # 結果合併與視覺證據
+│   ├── summary/             # 統計
+│   ├── report_html/         # HTML 編譯，含 template.html
+│   ├── report_check/        # 報告健檢
+│   ├── clean_images/        # 圖片清理
+│   └── dummy/               # 測試插件，不由正式入口載入
+├── scripts/
+│   ├── skill.py             # 唯一正式入口
+│   └── _bootstrap.py        # 明確依賴注入與管線組裝
+├── references/              # 操作、資料、視覺及報告契約
+└── tests/                   # 回歸測試與遷移輸出基準
 ```
 
 ---
@@ -126,7 +157,7 @@ mkdir -p "$HOME/.gemini/config/skills" && curl -fsSL "https://github.com/Lin-Yu-
 ### 💬 方式三：免開終端機！Antigravity 聊天框「自然語言安裝」
 在 Antigravity 聊天對話框中，直接將以下提示詞複製貼上交給 Agent：
 
-> 「請幫我從 GitHub 倉庫 (`https://github.com/Lin-Yu-kuan/mySkill-private`) 將 `analyze-exam-subject` 技能套件（含 SKILL.md、scripts/ 與 references/ 目錄）下載並安裝到我的 Antigravity 全域技能目錄 (`~/.gemini/config/skills/analyze-exam-subject`)。」
+> 「請幫我從 GitHub 倉庫 (`https://github.com/Lin-Yu-kuan/mySkill-private`) 將 `analyze-exam-subject` 技能套件（含 SKILL.md、core/、interfaces/、plugins/（含模板）、scripts/ 與 references/ 目錄）下載並安裝到我的 Antigravity 全域技能目錄 (`~/.gemini/config/skills/analyze-exam-subject`)。」
 
 ---
 

@@ -1,4 +1,4 @@
-"""測試互動式 HTML 報告編譯器（build_report_html.py）。"""
+"""測試互動式 HTML 報告插件。"""
 from __future__ import annotations
 
 import json
@@ -11,15 +11,21 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
 
-from build_report_html import (  # noqa: E402
-    build_report_html,
-    clean_moex_pua,
-    parse_extraction_questions,
-    repair_latex_escapes,
-)
+
+
+
+
+from plugin_support import make_services, format_check_report
+services = make_services()
+unittest.addModuleCleanup(services.close)
+tool = services.tool
+compact = services.compact
+renderer = services.renderer
+build_report_html = services.report.build_report_html
+clean_moex_pua = services.report.clean_moex_pua
+parse_extraction_questions = services.report.parse_extraction_questions
+repair_latex_escapes = services.report.repair_latex_escapes
 
 
 class BuildReportHtmlTests(unittest.TestCase):
@@ -218,7 +224,7 @@ class BuildReportHtmlTests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    str(SCRIPTS / "build_report_html.py"),
+                    str(SCRIPTS / 'skill.py'), "report-html",
                     "--run-dir",
                     str(run_dir),
                     "--output",

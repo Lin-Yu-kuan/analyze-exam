@@ -11,15 +11,20 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
 
-from build_report_html import (  # noqa: E402
-    build_report_html,
-    check_report_html,
-    format_check_report,
-    resolve_run_dir,
-)
+
+
+
+
+from plugin_support import make_services, format_check_report
+services = make_services()
+unittest.addModuleCleanup(services.close)
+tool = services.tool
+compact = services.compact
+renderer = services.renderer
+build_report_html = services.report.build_report_html
+check_report_html = services.check.check_report_html
+resolve_run_dir = services.storage.resolve_run_dir
 
 
 class ReviseModeTests(unittest.TestCase):
@@ -126,8 +131,8 @@ class ReviseModeTests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    str(SCRIPTS / "build_report_html.py"),
-                    "--revise",
+                    str(SCRIPTS / 'skill.py'),
+                    'revise',
                     str(analysis_root),
                 ],
                 capture_output=True,

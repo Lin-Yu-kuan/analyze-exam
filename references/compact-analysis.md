@@ -34,11 +34,11 @@ target_exam 預設 null；可為完整考試名稱字串，或 exam_name／categ
 在技能資料夾執行，路徑須指向實際檔案，輸出皆為新檔：
 
 ```shell
-python scripts/compact_analysis.py prepare --inventory inventory.json --selection selection.json --render-index render-index.json --topics topics.json --output work.json
-python scripts/compact_analysis.py status --work work.json
-python scripts/compact_analysis.py packet --work work.json --batch-id S來源短ID-1 --context 1 --output packet-001.json
-python scripts/compact_analysis.py merge --work work.json --results result-001.json result-002.json --visual-review visual-review.json --extraction extraction.json --output question-index.json
-python scripts/compact_analysis.py summary --index question-index.json --target "高考" --examples 2 --output summary.json
+python scripts/skill.py prepare --inventory inventory.json --selection selection.json --render-index render-index.json --topics topics.json --output work.json
+python scripts/skill.py status --work work.json
+python scripts/skill.py packet --work work.json --batch-id S來源短ID-1 --context 1 --output packet-001.json
+python scripts/skill.py merge --work work.json --results result-001.json result-002.json --visual-review visual-review.json --extraction extraction.json --output question-index.json
+python scripts/skill.py summary --index question-index.json --target "高考" --examples 2 --output summary.json
 ```
 
 prepare 的 stdout 顯示實際 batch_id；`status` 列出待處理批次與已完成快取，長流程不必讀完整 work.json。`merge --visual-review` 會用宿主實際開圖紀錄核對 page／image 雜湊，這是指定 `checked` 的唯一可靠來源；`merge --extraction` 會補 `text_extracted_pages` 與 `vision_only`；`merge --fast-verify` 可用 prepare 記錄的 mtime／size 跳過未變更檔案的雜湊（預設完整重算）。`--require-complete` 可在交付前拒絕 partial。`summary --target` 只改變統計目標，不會重跑 AI。
@@ -75,7 +75,7 @@ merge 補回完整來源、圖片證據、長題目 ID 與判讀狀態；相同�
 summary 只計 countable、completed 的相關／交叉題；多標籤不重複增加總題數。指定目標考試時主統計採精確篩選，其他題列補充數量；保留年度／考試分層。未建立命題事件對應時 `event_count` 為 null，不以分層推估。報告只讀統計與每主題最多 2 題代表來源。
 
 ```shell
-python scripts/compact_analysis.py prepare --inventory new-inventory.json --selection new-selection.json --render-index new-render-index.json --topics topics.json --prior question-index.json --output new-work.json
+python scripts/skill.py prepare --inventory new-inventory.json --selection new-selection.json --render-index new-render-index.json --topics topics.json --prior question-index.json --output new-work.json
 ```
 
 來源、圖片、備考科目、分類表及分類版本一致，且整卷已核對並無待確認題，才跳過 AI。新增試卷只新增工作；修改報告格式或目標考試只重跑 summary 與寫報告。全數命中時可省略 `--results`（或使用 `{"results":[]}` 空結果檔）。

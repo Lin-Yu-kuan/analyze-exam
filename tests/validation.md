@@ -1,5 +1,19 @@
 # 本機驗證紀錄
 
+## 2026-11-08：第一階段插件骨架
+
+- 環境：Windows、Python 3.14.7；骨架未新增第三方依賴。
+- 第一階段示範入口：通過；兩個 Dummy 依序傳遞同一輸入，卸載第一個後只有第二個接收事件。2.0.0 已移除此獨立入口，等效測試保留。
+- `python -m unittest discover -s tests -v`：86 項，83 項通過、3 項略過；新增的 18 項架構測試全部通過。
+- 略過：1 項 junction 與 2 項符號連結測試，原因為目前 Windows 環境權限不足；沒有因 PDF 依賴缺失而略過。
+- 系統預設暫存目錄出現存取拒絕；將當次測試程序的 TEMP、TMP 指向專案 `.pytest_cache/skill-temp` 後完整回歸通過。沒有修改全域環境設定。
+- 已驗證初始化失敗回收、錯誤彙整、反向卸載、失效 Context、事件監聽隔離、循序資料流、失敗停止與重新執行，以及核心／插件的靜態匯入邊界。
+- 新增的 9 個 Python 檔案通過 Python 3.10 語法模式解析；尚未在 Python 3.10 執行環境實測。
+- 專案中繼資料、相對連結與擴充後的 Python 語法檢查通過。外部 skill-creator `quick_validate.py` 因缺少 PyYAML 無法啟動；未為此新增依賴或修改既有 frontmatter。
+- 完整測試紀錄位於本機快取 `.pytest_cache/plugin-full-tests.log`，不納入交付。
+
+## 先前分析流程驗證
+
 日期：2026-11-02（Asia/Taipei）。環境：Windows、Python 3.14.7、pypdf 6.21.4、pypdfium2 5.14.0、PDFium 156.0.8076.0、Pillow 13.0.0。
 
 ## 已完成

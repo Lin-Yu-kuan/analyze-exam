@@ -3,8 +3,17 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from build_report_html import build_compact_payload
+
+
+
+
+from plugin_support import make_services, format_check_report
+services = make_services()
+unittest.addModuleCleanup(services.close)
+tool = services.tool
+compact = services.compact
+renderer = services.renderer
+build_compact_payload = services.report.build_compact_payload
 
 
 class ReportRegression(unittest.TestCase):

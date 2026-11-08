@@ -33,8 +33,9 @@ class SkillMetadataTests(unittest.TestCase):
                 self.assertTrue(path.is_relative_to(ROOT.resolve()), f"連結逃出技能資料夾：{target}")
 
     def test_python_sources_compile(self) -> None:
-        for source in [*(ROOT / "scripts").glob("*.py"), *(ROOT / "tests").glob("*.py")]:
-            compile(source.read_text(encoding="utf-8"), str(source), "exec")
+        for directory in ("scripts", "tests", "core", "interfaces", "plugins"):
+            for source in (ROOT / directory).rglob("*.py"):
+                compile(source.read_text(encoding="utf-8"), str(source), "exec")
 
 
 if __name__ == "__main__":

@@ -8,9 +8,17 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import compact_analysis as compact
-import exam_files as tool
+
+
+
+
+
+from plugin_support import make_services, format_check_report
+services = make_services()
+unittest.addModuleCleanup(services.close)
+tool = services.tool
+compact = services.compact
+renderer = services.renderer
 
 
 class CompactTests(unittest.TestCase):
@@ -184,7 +192,7 @@ class CompactTests(unittest.TestCase):
 
     def test_fast_verify_skips_unchanged_hash_and_falls_back_when_needed(self) -> None:
         work = self.work()
-        with patch.object(compact, "digest", side_effect=AssertionError("hash should be skipped")):
+        with patch.object(services.storage, "digest", side_effect=AssertionError("hash should be skipped")):
             index = compact.merge(work, self.results(work), fast_verify=True)
             self.assertEqual(len(index["questions"]), 2)
             with self.assertRaises(AssertionError):

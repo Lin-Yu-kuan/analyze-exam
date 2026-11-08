@@ -11,10 +11,18 @@ import unittest
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "exam_files.py"
-SPEC = importlib.util.spec_from_file_location("exam_files", SCRIPT)
-tool = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(tool)
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / 'skill.py'
+
+
+
+
+
+from plugin_support import make_services, format_check_report
+services = make_services()
+unittest.addModuleCleanup(services.close)
+tool = services.tool
+compact = services.compact
+renderer = services.renderer
 
 
 def pdf(path: Path, text: bool = True) -> None:

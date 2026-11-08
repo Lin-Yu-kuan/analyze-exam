@@ -1,6 +1,6 @@
 ---
 name: analyze-exam-subject
-version: 1.0.1
+version: 2.0.0
 category: exam
 category_label: 備考 / 題庫分析
 summary: 本機考古題 PDF 題庫智慧盤點與聚合分析，支援視覺逐頁開圖核對、精簡批次快取、去重命題事件統計與結構化考點地圖報告產出
@@ -23,7 +23,9 @@ params:
 
 使用宿主 AI 分析，不呼叫額外 AI API。適用於能讀取本機檔案與執行 Python 的宿主，不要求特定 MCP、提問介面或其他 skill。以台灣繁體中文輸出。
 
-流程：`run-dir` → `inventory` → 保存 `selection.json` → `render` → 跨來源抽樣建立分類表 → `prepare` → 逐批 `packet`／回覆 → `merge --visual-review` → `summary` → 報告。
+統一入口為 `python "<技能目錄>/scripts/skill.py" <command> ...`，可從任意工作目錄執行。所有程式操作均透過插件與同步 Pipeline；宿主 AI 仍負責看圖、分類與報告寫作，不由 Python 自動呼叫模型。
+
+流程：`scan` → 保存 `selection.json` → `render` → 宿主跨來源抽樣建立分類表 → `prepare` → 宿主逐批 `packet`／回覆 → `finalize`（合併與統計）→ 宿主撰寫報告。
 
 ## 1. 盤點與選取
 
@@ -51,7 +53,7 @@ params:
 
 ## 3. 統計與報告
 
-以 `merge --visual-review` 補齊來源，再用 `summary` 計算統計；有文字擷取時傳入 `--extraction`。summary 輸出到與 `report.md` 相同的執行目錄。最後只讀 summary 與必要代表題，按 [報告結構](references/report-template.md) 產出 `report.md`，不憑模型印象估算次數；各主題考查焦點嚴禁以 3～4 行粗略列點交代，必須依學門領域嚴格落實「四大層次深層剖析骨幹」（次維度拆解、核心理論/演算法/法規矩陣、申論題型破題點與代表真題詳解），提供高知識密度之深度剖析。
+以 `finalize --run-dir <執行目錄> --results <批次結果...> --visual-review <視覺紀錄>` 依序合併來源與計算統計；需要個別接續時仍可使用 `merge` 與 `summary` 子命令。有文字擷取時傳入 `--extraction`。summary 輸出到與 `report.md` 相同的執行目錄。最後只讀 summary 與必要代表題，按 [報告結構](references/report-template.md) 產出 `report.md`，不憑模型印象估算次數；各主題考查焦點嚴禁以 3～4 行粗略列點交代，必須依學門領域嚴格落實「四大層次深層剖析骨幹」（次維度拆解、核心理論/演算法/法規矩陣、申論題型破題點與代表真題詳解），提供高知識密度之深度剖析。
 
 考題連結只用 summary 提供的相對 `link`，並以文字標示題庫相對路徑、頁碼與題號；報告不得出現本機絕對路徑。產出報告後，可於題庫根目錄同步一份 `<備考科目>_考點分析報告.md` 作為首頁入口（連結改採題庫相對路徑），方便使用者即時查閱。使用者想接著用 knowledge-map-learning 深入某考點時，依報告結構的銜接規則附上題目快照與題庫相對路徑，讓另一個技能不讀 PDF 也能開課。
 
@@ -65,7 +67,7 @@ params:
 
 預設交付有來源依據的 `report.md`，內容以考點分類、命題分布、限制與準備建議為主。不要求每個主題撰寫教材。
 
-使用者要求 HTML 時，才執行 `build_report_html.py --run-dir <執行目錄>`。HTML 只呈現已確認資料，不得將零命中改為全題庫，也不得從題號推測題型。未記錄題型時顯示待確認。
+使用者要求 HTML 時，才執行 `scripts/skill.py report-html --run-dir <執行目錄>`。HTML 只呈現已確認資料，不得將零命中改為全題庫，也不得從題號推測題型。未記錄題型時顯示待確認。
 
 使用者要求刷題時，先核對題幹、選項及官方答案的完整性；資料不足的題目僅供來源查閱，不宣稱可完整作答或自動批改。要求深入教學時才補充教材，明確區分來源觀察與額外教學；銜接方式見報告結構。不要為了填滿介面補寫無證據內容。
 
@@ -75,7 +77,7 @@ params:
 
 恢復時依 [工具使用](references/usage.md) 核對文字擷取、依視覺檢查文件核對渲染、依精簡分析文件核對 AI 快取；來源雜湊變更不得沿用舊分析。這些文件分別維護恢復條件與命令，勿僅憑舊完成標記跳過工作。題庫搬移後重新盤點新位置，沿用含 `relative_path` 的 selection 即可重用快取。
 
-交付報告連結、處理範圍與限制，單列失敗、不可判讀及待確認項目。文字擷取成功、圖片生成成功與題目判讀完成分開統計；完整覆蓋前標示「部分完成」，不將擷取成功等同分析正確。分析完成後，若磁碟空間吃緊，可執行 `exam_files.py clean-images` 安全清理 `render-images/` 暫存圖檔；清理後 HTML 的圖片預覽將不可用；原始 PDF 仍可查閱，需要預覽時須重新渲染。
+交付報告連結、處理範圍與限制，單列失敗、不可判讀及待確認項目。文字擷取成功、圖片生成成功與題目判讀完成分開統計；完整覆蓋前標示「部分完成」，不將擷取成功等同分析正確。分析完成後，若磁碟空間吃緊，可執行 `scripts/skill.py clean-images` 安全清理 `render-images/` 暫存圖檔；清理後 HTML 的圖片預覽將不可用；原始 PDF 仍可查閱，需要預覽時須重新渲染。
 
 ## 5. `-revise` 快速重新生成與報告健檢模式 (Fast Re-build & Health Check)
 
@@ -87,7 +89,7 @@ params:
 2. **確定性自動執行**：
    直接執行本技能腳本：
    ```powershell
-   python "<技能目錄>/scripts/build_report_html.py" --revise "<傳入路徑>"
+   python "<技能目錄>/scripts/skill.py" revise "<傳入路徑>"
    ```
    腳本會自動智慧解析鎖定最新成果目錄、重新編譯 `report.html`、自動同步一份至題庫根目錄（`report.html` 與 `<備考科目>_考點分析報告.html`），並進行全面的 HTML 結構與資料健康檢查。
 3. **回報健康檢查合格卡片**：
@@ -110,12 +112,14 @@ params:
 
 ## 技能維護與自動更新指引 (Skill Maintenance & Auto-Update)
 
+維護或擴充時讀 [插件架構與驗證](references/plugin-architecture.md)。2.0.0 起僅保留插件版；舊分散腳本入口已移除，所有命令改走統一入口，既有分析成果格式保持相容。
+
 `version` 是本機版本；更新來源的版本與 SHA-256 記在 `.skillkit/skills.json`（`https://raw.githubusercontent.com/Lin-Yu-kuan/mySkill-private/main/.skillkit/skills.json`）。當使用者要求「更新此技能」或「檢查最新版本」時：
 
 1. **比對版本**：讀取 `skills.json` 中本技能的 `version`，與本機相同時回報「已是最新版本（vX.Y.Z）」即結束，不覆寫任何檔案。
 2. **下載並驗證**：版本不同時下載 `update_url` 內容，計算 SHA-256，必須與 manifest 的 `sha256` 一致；不符即中止。
 3. **先備份**：驗證通過後，將本機 `SKILL.md` 複製為 `SKILL.md.bak`；完整套件更新另將整個資料夾改名為 `analyze-exam-subject.bak-<yyyyMMdd-HHmmss>`。
-4. **再更新**：以驗證過的內容覆寫 `SKILL.md`。使用者要求完整套件更新（`scripts/` 與 `references/`）時，重跑本技能 `README.md`「🚀 Antigravity 一鍵安裝方式」中的指令，保留本機額外檔案。
+4. **再更新**：以驗證過的內容覆寫 `SKILL.md`。使用者要求完整套件更新（`core/`、`interfaces/`、`plugins/`、`scripts/` 與 `references/`，含插件模板資源）時，重跑本技能 `README.md`「🚀 Antigravity 一鍵安裝方式」中的指令，保留本機額外檔案。
 5. **驗證與還原**：確認新檔案齊全且 `name`、`version` 正確後才刪除備份；下載失敗或內容不完整時，立即中止並還原備份。
 6. **回報差異**：只回報「v舊 → v新」與變更章節摘要；版本號未變但內容有差異時，如實告知。
 7. **不靜默覆寫**：使用者未明確要求更新時，先確認再動作。

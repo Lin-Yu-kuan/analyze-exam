@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from plugins.render import MAX_PIXELS
 
 try:
     from PIL import Image, ImageDraw
@@ -18,11 +19,19 @@ except ImportError:  # pragma: no cover - 只影響沒有 Pillow 的環境
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject, NumberObject
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import exam_files as tool
-import pdf_render as renderer
+
+
+
 
 HAS_PDFIUM = importlib.util.find_spec("pypdfium2") is not None
+
+
+from plugin_support import make_services, format_check_report
+services = make_services()
+unittest.addModuleCleanup(services.close)
+tool = services.tool
+compact = services.compact
+renderer = services.renderer
 
 
 def mixed_fixture(path: Path) -> None:
@@ -93,7 +102,7 @@ class RenderTests(unittest.TestCase):
         for row in rows:
             with Image.open(row["image_path"]) as image:
                 self.assertGreater(image.width, 0)
-                self.assertLessEqual(image.width * image.height, renderer.MAX_PIXELS)
+                self.assertLessEqual(image.width * image.height, MAX_PIXELS)
                 self.assertLess(image.convert("L").getextrema()[0], 100)
         self.assertGreater(rows[0]["width"], rows[0]["height"])
         self.assertLess(rows[5]["width"], rows[5]["height"])
@@ -244,7 +253,7 @@ class RenderTests(unittest.TestCase):
         import subprocess
         inventory = self.base / "inventory.json"
         tool.write_new(inventory, self.data)
-        run = subprocess.run([sys.executable, str(Path(tool.__file__)), "render", "--inventory", str(inventory),
+        run = subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / "scripts" / "skill.py"), "render", "--inventory", str(inventory),
                               "--pages", "1", "--output", str(self.output)], capture_output=True)
         self.assertEqual(run.returncode, 0, run.stderr)
         invalid = self.base / "invalid.json"

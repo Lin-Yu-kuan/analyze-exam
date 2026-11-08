@@ -1,0 +1,566 @@
+{
+  "inventory": {
+    "schema_version": 1,
+    "root": "{ROOT}",
+    "files": [
+      {
+        "path": "{ROOT}\\來源.pdf",
+        "relative_path": "來源.pdf",
+        "sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+        "size": 46,
+        "status": "inventoried",
+        "metadata": []
+      }
+    ],
+    "contents": [
+      {
+        "sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+        "paths": [
+          "{ROOT}\\來源.pdf"
+        ]
+      }
+    ],
+    "warnings": []
+  },
+  "selection": {
+    "schema_version": 1,
+    "study_subject": "資料結構",
+    "classification_version": "1",
+    "target_exam": null,
+    "selected_sources": [
+      {
+        "path": "{ROOT}\\來源.pdf",
+        "sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+        "official_subject": "資料結構與資料庫",
+        "exam_name": "高考",
+        "year": 114,
+        "category": "資訊處理",
+        "role": "question"
+      }
+    ]
+  },
+  "renders": {
+    "kind": "exam-render-index",
+    "documents": [
+      {
+        "sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+        "total_pages": 2,
+        "pages": [
+          {
+            "page": 1,
+            "status": "rendered",
+            "image_path": "{ROOT}\\page.png",
+            "image_sha256": "444cf7faaefd0e1f3a9709cf0db3bb81a68f2b10ab1e632b57d8ecbe67ce21b3"
+          },
+          {
+            "page": 2,
+            "status": "rendered",
+            "image_path": "{ROOT}\\page.png",
+            "image_sha256": "444cf7faaefd0e1f3a9709cf0db3bb81a68f2b10ab1e632b57d8ecbe67ce21b3"
+          }
+        ]
+      }
+    ]
+  },
+  "topics": [
+    {
+      "topic_id": "TREE",
+      "label": "樹"
+    },
+    {
+      "topic_id": "GRAPH",
+      "label": "圖"
+    }
+  ],
+  "review": {
+    "schema_version": 1,
+    "host_vision": {
+      "available": true,
+      "tool": "test",
+      "probe_image": "{ROOT}\\page.png",
+      "probe_result": "ok"
+    },
+    "pages": [
+      {
+        "source_sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+        "page": 1,
+        "image_path": "{ROOT}\\page.png",
+        "image_sha256": "444cf7faaefd0e1f3a9709cf0db3bb81a68f2b10ab1e632b57d8ecbe67ce21b3",
+        "visual_status": "checked",
+        "observations": "synthetic",
+        "reason": ""
+      },
+      {
+        "source_sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+        "page": 2,
+        "image_path": "{ROOT}\\page.png",
+        "image_sha256": "444cf7faaefd0e1f3a9709cf0db3bb81a68f2b10ab1e632b57d8ecbe67ce21b3",
+        "visual_status": "checked",
+        "observations": "synthetic",
+        "reason": ""
+      }
+    ]
+  },
+  "results": [
+    {
+      "source": "Sf8dfa7d9db8df35a",
+      "reviewed_pages": [
+        1,
+        2
+      ],
+      "questions": [
+        {
+          "p": 1,
+          "q": "1",
+          "r": "r",
+          "t": [
+            "TREE",
+            "TREE",
+            "GRAPH"
+          ]
+        },
+        {
+          "p": 2,
+          "q": "2",
+          "r": "i",
+          "t": []
+        }
+      ]
+    }
+  ],
+  "report_md": "# 資料結構\n\n## 2. 考點地圖\n\n### TREE：樹\n樹的基本操作。\n\n### GRAPH：圖\n圖的走訪。\n",
+  "expected_index": {
+    "schema_version": 3,
+    "protocol": 2,
+    "study_subject": "資料結構",
+    "classification_version": "1",
+    "topics": [
+      {
+        "topic_id": "TREE",
+        "label": "樹"
+      },
+      {
+        "topic_id": "GRAPH",
+        "label": "圖"
+      }
+    ],
+    "mode": "compact",
+    "target_exam": null,
+    "config_hash": "79363beca75afbf79ee800d19d43fb61cdefe6cfa32b7f1f40887cbd21fa9095",
+    "source_root": "{ROOT}",
+    "status": "complete",
+    "source_status": [
+      {
+        "path": "{ROOT}\\來源.pdf",
+        "relative_path": "來源.pdf",
+        "sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+        "status": "processed",
+        "detail": ""
+      }
+    ],
+    "questions": [
+      {
+        "question_id": "Sf8dfa7d9db8df35a-P1-Q1",
+        "content_sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+        "pages": [
+          1
+        ],
+        "question_number": "1",
+        "countable": true,
+        "question_type": "unknown",
+        "relevance": "relevant",
+        "topic_ids": [
+          "GRAPH",
+          "TREE"
+        ],
+        "reason": "",
+        "summary": "",
+        "source_refs": [
+          {
+            "path": "{ROOT}\\來源.pdf",
+            "sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+            "official_subject": "資料結構與資料庫",
+            "exam_name": "高考",
+            "year": 114,
+            "category": "資訊處理",
+            "role": "question",
+            "relative_path": "來源.pdf",
+            "metadata_evidence": null,
+            "event_id": null
+          }
+        ],
+        "answer_refs": [],
+        "score": null,
+        "parent_question_id": null,
+        "evidence_excerpt": "",
+        "visual_status": "checked",
+        "interpretation_method": "text_and_vision",
+        "analysis_status": "completed",
+        "image_evidence": [
+          {
+            "source_sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+            "page": 1,
+            "image_path": "{ROOT}\\page.png",
+            "image_sha256": "444cf7faaefd0e1f3a9709cf0db3bb81a68f2b10ab1e632b57d8ecbe67ce21b3"
+          }
+        ],
+        "duplicate_candidates": []
+      },
+      {
+        "question_id": "Sf8dfa7d9db8df35a-P2-Q2",
+        "content_sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+        "pages": [
+          2
+        ],
+        "question_number": "2",
+        "countable": true,
+        "question_type": "unknown",
+        "relevance": "irrelevant",
+        "topic_ids": [],
+        "reason": "",
+        "summary": "",
+        "source_refs": [
+          {
+            "path": "{ROOT}\\來源.pdf",
+            "sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+            "official_subject": "資料結構與資料庫",
+            "exam_name": "高考",
+            "year": 114,
+            "category": "資訊處理",
+            "role": "question",
+            "relative_path": "來源.pdf",
+            "metadata_evidence": null,
+            "event_id": null
+          }
+        ],
+        "answer_refs": [],
+        "score": null,
+        "parent_question_id": null,
+        "evidence_excerpt": "",
+        "visual_status": "checked",
+        "interpretation_method": "text_and_vision",
+        "analysis_status": "completed",
+        "image_evidence": [
+          {
+            "source_sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+            "page": 2,
+            "image_path": "{ROOT}\\page.png",
+            "image_sha256": "444cf7faaefd0e1f3a9709cf0db3bb81a68f2b10ab1e632b57d8ecbe67ce21b3"
+          }
+        ],
+        "duplicate_candidates": []
+      }
+    ],
+    "cache": {
+      "2b7e8e8e5457fa13c0b32c99dba697c63a51ab73b3eec4a3bef70eb18bc0eeac": {
+        "complete": true,
+        "result": {
+          "reviewed_pages": [
+            1,
+            2
+          ],
+          "questions": [
+            {
+              "p": 1,
+              "q": "1",
+              "r": "r",
+              "t": [
+                "GRAPH",
+                "TREE"
+              ],
+              "pages": [
+                1
+              ],
+              "count": true,
+              "why": "",
+              "sample": "",
+              "answers": [],
+              "duplicate_of": [],
+              "score": null,
+              "parent": null,
+              "evidence": "",
+              "question_type": "unknown"
+            },
+            {
+              "p": 2,
+              "q": "2",
+              "r": "i",
+              "t": [],
+              "pages": [
+                2
+              ],
+              "count": true,
+              "why": "",
+              "sample": "",
+              "answers": [],
+              "duplicate_of": [],
+              "score": null,
+              "parent": null,
+              "evidence": "",
+              "question_type": "unknown"
+            }
+          ]
+        }
+      }
+    },
+    "coverage": {
+      "selected_files": 1,
+      "processed_files": 1,
+      "failed_files": 0,
+      "pending_files": 0,
+      "needs_review_files": 0,
+      "selected_pages": 2,
+      "text_extracted_pages": null,
+      "rendered_pages": 2,
+      "visually_checked_pages": 2,
+      "pending_visual_pages": 0,
+      "unrendered_pages": 0,
+      "unreadable_pages": 0,
+      "render_failed_pages": 0,
+      "unknown_page_count_files": 0
+    },
+    "warnings": []
+  },
+  "expected_summary": {
+    "schema_version": 2,
+    "study_subject": "資料結構",
+    "target_exam": null,
+    "source_root": "{ROOT}",
+    "source_files": [
+      {
+        "relative_path": "來源.pdf",
+        "sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+        "official_subject": "資料結構與資料庫",
+        "year": 114,
+        "exam_name": "高考",
+        "link": "來源.pdf"
+      }
+    ],
+    "status": "complete",
+    "coverage": {
+      "selected_files": 1,
+      "processed_files": 1,
+      "failed_files": 0,
+      "pending_files": 0,
+      "needs_review_files": 0,
+      "selected_pages": 2,
+      "text_extracted_pages": null,
+      "rendered_pages": 2,
+      "visually_checked_pages": 2,
+      "pending_visual_pages": 0,
+      "unrendered_pages": 0,
+      "unreadable_pages": 0,
+      "render_failed_pages": 0,
+      "unknown_page_count_files": 0
+    },
+    "unique_related_questions": 1,
+    "supplemental_related_questions": 0,
+    "pending_questions": 0,
+    "irrelevant_questions": 1,
+    "uncertain_questions": 0,
+    "unreadable_questions": 0,
+    "duplicate_candidate_count": 0,
+    "answer_pair_count": 0,
+    "event_count": null,
+    "event_note": "未建立命題事件對應；年度考試分層不等於事件數。",
+    "topics": [
+      {
+        "topic_id": "TREE",
+        "label": "樹",
+        "count": 1,
+        "examples": [
+          {
+            "id": "Sf8dfa7d9db8df35a-P1-Q1",
+            "pages": [
+              1
+            ],
+            "summary": "",
+            "sources": [
+              {
+                "path": "{ROOT}\\來源.pdf",
+                "sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+                "official_subject": "資料結構與資料庫",
+                "exam_name": "高考",
+                "year": 114,
+                "category": "資訊處理",
+                "role": "question",
+                "relative_path": "來源.pdf",
+                "metadata_evidence": null,
+                "event_id": null,
+                "link": "來源.pdf"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "topic_id": "GRAPH",
+        "label": "圖",
+        "count": 1,
+        "examples": [
+          {
+            "id": "Sf8dfa7d9db8df35a-P1-Q1",
+            "pages": [
+              1
+            ],
+            "summary": "",
+            "sources": [
+              {
+                "path": "{ROOT}\\來源.pdf",
+                "sha256": "f8dfa7d9db8df35a344dc25bee6aee77c219600cb0459e83d83d778ad5e9413f",
+                "official_subject": "資料結構與資料庫",
+                "exam_name": "高考",
+                "year": 114,
+                "category": "資訊處理",
+                "role": "question",
+                "relative_path": "來源.pdf",
+                "metadata_evidence": null,
+                "event_id": null,
+                "link": "來源.pdf"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "by_year_exam": [
+      {
+        "year": 114,
+        "exam_name": "高考",
+        "unique_questions": 1
+      }
+    ],
+    "notes": [
+      "主題可多標籤，合計可能超過相關題數。",
+      "年度考試分層不是獨立命題事件計數；未知年份或考試保留 null。"
+    ]
+  },
+  "expected_payload": {
+    "study_subject": "資料結構",
+    "target_exam": null,
+    "status": "complete",
+    "coverage": {
+      "selected_files": 1,
+      "processed_files": 1,
+      "failed_files": 0,
+      "pending_files": 0,
+      "needs_review_files": 0,
+      "selected_pages": 2,
+      "text_extracted_pages": null,
+      "rendered_pages": 2,
+      "visually_checked_pages": 2,
+      "pending_visual_pages": 0,
+      "unrendered_pages": 0,
+      "unreadable_pages": 0,
+      "render_failed_pages": 0,
+      "unknown_page_count_files": 0
+    },
+    "target_unique_count": 1,
+    "all_unique_count": 1,
+    "answer_pair_count": 0,
+    "target_answer_pair_count": 0,
+    "duplicate_count": 0,
+    "target_duplicate_count": 0,
+    "report_path": "{ROOT}/report.md",
+    "topics": [
+      {
+        "id": "GRAPH",
+        "label": "圖",
+        "target_total": 1,
+        "target_essay": 0,
+        "target_mcq": 0,
+        "all_total": 1,
+        "all_essay": 0,
+        "all_mcq": 0,
+        "laws": "",
+        "subtopics": "",
+        "patterns": "",
+        "html": "<p>圖的走訪。</p>",
+        "km_module": "M1",
+        "km_module_name": "M1 題庫主題第一組"
+      },
+      {
+        "id": "TREE",
+        "label": "樹",
+        "target_total": 1,
+        "target_essay": 0,
+        "target_mcq": 0,
+        "all_total": 1,
+        "all_essay": 0,
+        "all_mcq": 0,
+        "laws": "",
+        "subtopics": "",
+        "patterns": "",
+        "html": "<p>樹的基本操作。</p>",
+        "km_module": "M1",
+        "km_module_name": "M1 題庫主題第一組"
+      }
+    ],
+    "sources": [
+      {
+        "year": 114,
+        "exam": "高考",
+        "subj": "資料結構與資料庫",
+        "cat": "資訊處理",
+        "pdf": "來源.pdf",
+        "is_target": true
+      }
+    ],
+    "questions": [
+      {
+        "id": "Sf8dfa7d9db8df35a-P1-Q1",
+        "q": "1",
+        "p": [
+          1
+        ],
+        "type": "unknown",
+        "score": null,
+        "rel": "r",
+        "why": "",
+        "t": [
+          "GRAPH",
+          "TREE"
+        ],
+        "s": 0,
+        "target": true,
+        "stem": "",
+        "quiz_ready": false,
+        "opts": [],
+        "ans": "",
+        "orig_ans": "",
+        "basis": "",
+        "imgs": [
+          "page.png"
+        ],
+        "dups": []
+      }
+    ],
+    "report_sections": [
+      {
+        "id": "sec-intro",
+        "title": "報告摘要與範圍狀態",
+        "html": "<h1>資料結構</h1>"
+      },
+      {
+        "id": "sec-1",
+        "title": "2. 考點地圖",
+        "html": "<h2>2. 考點地圖</h2>\n<h3>TREE：樹</h3>\n<p>樹的基本操作。</p>\n<h3>GRAPH：圖</h3>\n<p>圖的走訪。</p>"
+      }
+    ],
+    "by_year_target": [
+      {
+        "year": 114,
+        "exam_name": "高考",
+        "unique_questions": 1
+      }
+    ],
+    "by_year_all": [
+      {
+        "year": 114,
+        "exam_name": "高考",
+        "unique_questions": 1
+      }
+    ]
+  },
+  "template_sha256": "e5f226504fb9fee587c505c0033c6e6ea5290af1294cac5b6b7c30e2f599e6fd"
+}

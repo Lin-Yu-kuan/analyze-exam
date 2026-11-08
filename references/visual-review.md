@@ -7,10 +7,10 @@
 所有頁面依序處理並釋放 PDF page、bitmap 與 Pillow image。圖片存於索引旁 `render-images/`；每頁結束先 append 到 `render-index.json.journal.jsonl` 並 fsync，文件結束才折回完整 render-index 並刪除 journal。中斷時索引保留 in_progress；恢復時先重放 journal，再把本次處理頁覆蓋，不會把已完成的頁截掉。單頁失敗不阻止其他頁。
 
 ```shell
-python scripts/exam_files.py render --inventory "D:/題庫/_analysis/盤點/inventory.json" --pages 1 --output "D:/題庫/_analysis/盤點/render-index.json"
-python scripts/exam_files.py render --inventory "D:/題庫/_analysis/盤點/inventory.json" --selection "D:/題庫/_analysis/資料結構/本次/selection.json" --output "D:/題庫/_analysis/資料結構/本次/render-index.json"
-python scripts/exam_files.py render --inventory "D:/題庫/_analysis/盤點/inventory.json" --selection "D:/題庫/_analysis/資料結構/本次/selection.json" --resume "D:/題庫/_analysis/資料結構/本次/render-index.json" --output "D:/題庫/_analysis/資料結構/本次/render-index.json"
-python scripts/exam_files.py render --inventory "D:/題庫/_analysis/盤點/inventory.json" --selection "D:/題庫/_analysis/資料結構/本次/selection.json" --pages 2 --dpi 300 --output "D:/題庫/_analysis/資料結構/本次/detail-index.json"
+python scripts/skill.py render --inventory "D:/題庫/_analysis/盤點/inventory.json" --pages 1 --output "D:/題庫/_analysis/盤點/render-index.json"
+python scripts/skill.py render --inventory "D:/題庫/_analysis/盤點/inventory.json" --selection "D:/題庫/_analysis/資料結構/本次/selection.json" --output "D:/題庫/_analysis/資料結構/本次/render-index.json"
+python scripts/skill.py render --inventory "D:/題庫/_analysis/盤點/inventory.json" --selection "D:/題庫/_analysis/資料結構/本次/selection.json" --resume "D:/題庫/_analysis/資料結構/本次/render-index.json" --output "D:/題庫/_analysis/資料結構/本次/render-index.json"
+python scripts/skill.py render --inventory "D:/題庫/_analysis/盤點/inventory.json" --selection "D:/題庫/_analysis/資料結構/本次/selection.json" --pages 2 --dpi 300 --output "D:/題庫/_analysis/資料結構/本次/detail-index.json"
 ```
 
 詳細重繪只做待看清的來源：先由已確認 selection 複製出該來源子集，避免同一頁碼套用所有試卷。上例的 selection 應為此子集。不要覆寫原完整索引；visual-review 記錄實際使用的 detail-index 圖片證據，`merge --visual-review` 會把該證據寫回 question-index 的 `image_evidence`。
