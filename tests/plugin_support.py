@@ -1,4 +1,5 @@
 """Test-only bindings to initialized plugin algorithms for existing regression cases."""
+import atexit
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -16,6 +17,7 @@ from plugins.cli.formatting import format_check_report
 def make_services():
     app = Application()
     app._load(tuple(FACTORIES), CommandRequest("inventory", manifest=Path("unused-test-manifest")))
+    atexit.register(app.close)
     instances = app.instances
     storage = instances["workspace"]
     tool = SimpleNamespace(**{name: getattr(storage, name) for name in

@@ -1,5 +1,15 @@
 # 本機驗證紀錄
 
+## 2026-11-08：2.0.0 全插件化遷移
+
+- 環境：Windows、Python 3.14.7、pypdf 6.21.4、pypdfium2 5.14.0、PDFium 156.0.8076.0、Pillow 13.0.0。
+- 核心不變：`core/__init__.py`、`core/events.py`、`core/manager.py` 的 SHA-256 與第一階段完全一致，業務遷移未修改微核心。
+- 統一入口與舊腳本移除：所有正式操作改由 `scripts/skill.py` 與 `scripts/_bootstrap.py` 組裝執行；舊 `exam_files.py`、`pdf_render.py`、`compact_analysis.py`、`build_report_html.py` 與 `plugin_demo.py` 已移除。
+- `python -m unittest discover -s tests -v`：104 項，102 項通過、2 項略過（Windows 符號連結權限不足；若執行環境亦限制 `mklink /J` 則為 101 項通過、3 項略過）。新增 14 項 `test_plugin_migration.py` 遷移與管線測試全部通過。
+- 測試生命週期修正：將各測試模組頂層匯入期的 `unittest.addModuleCleanup(services.close)` 改為模組級 `tearDownModule = services.close`（並於 `plugin_support.make_services` 註冊 `atexit` 保底），修正 `unittest discover` 在首個模組結束時提前關閉後續模組插件（導致 `manifest` 被卸載）的問題。
+- 輸出等價與基準比對：`question-index.json`、`summary.json`、`report.html` 內嵌 JSON payload 及 `plugins/report_html/template.html` 的 SHA-256 與遷移前基準（`tests/fixtures/plugin_migration.json`）完全一致。
+- 靜態與語法檢查：`core`、`interfaces`、`plugins`、`scripts`、`tests` 全部 Python 檔案通過 Python 3.10 語法模式（`feature_version=(3, 10)`）解析、Markdown 相對連結檢查與匯入邊界檢查（無跨插件具體匯入、無匯入期副作用、PDF 依賴延後載入）。
+
 ## 2026-11-08：第一階段插件骨架
 
 - 環境：Windows、Python 3.14.7；骨架未新增第三方依賴。

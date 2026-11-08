@@ -21,7 +21,7 @@ COMPACT = SCRIPTS / 'skill.py'
 
 from plugin_support import make_services, format_check_report
 services = make_services()
-unittest.addModuleCleanup(services.close)
+tearDownModule = services.close
 tool = services.tool
 compact = services.compact
 renderer = services.renderer
