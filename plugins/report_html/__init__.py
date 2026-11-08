@@ -133,6 +133,15 @@ class ReportHtmlPlugin(StagePlugin):
         fixed = re.sub(r"候選項目集（\$\s*）與頻繁項目集（\$\s*）", lambda m: "候選項目集（$C_k$）與頻繁項目集（$L_k$）", fixed)
         # 4.8 搜尋效率 O(\log_B N)
         fixed = re.sub(r"搜尋效率\s+\(\\log", lambda m: "搜尋效率 $O(\\log", fixed)
+
+        # 4.9 題庫分析覆蓋率變數跳脫自癒（修復因 \r, \t, \v 吞噬首字母或導致表格儲存格斷行）
+        fixed = re.sub(r"(\(?\s*)(?:\r?\n|\r)[ \t]*endered_pages(\s*\)?)", r"\1`rendered_pages`\2", fixed)
+        fixed = re.sub(r"(\(?\s*)(?<!`)\\rendered_pages(?!`)(\s*\)?)", r"\1`rendered_pages`\2", fixed)
+        fixed = re.sub(r"(\(?\s*)(?<!`)(?:\\text_extracted_pages|\\t[ \t]*ext_extracted_pages|\t[ \t]*ext_extracted_pages)(?!`)(\s*\)?)", r"\1`text_extracted_pages`\2", fixed)
+        fixed = re.sub(r"(\(?\s*)(?<!`)(?:\\visually_checked_pages|\\v[ \t]*isually_checked_pages|\x0b[ \t]*isually_checked_pages)(?!`)(\s*\)?)", r"\1`visually_checked_pages`\2", fixed)
+        fixed = re.sub(r"(\(?\s*)(?<!`)\\unrendered_pages(?!`)(\s*\)?)", r"\1`unrendered_pages`\2", fixed)
+        fixed = re.sub(r"(\(?\s*)(?<!`)\\pending_visual_pages(?!`)(\s*\)?)", r"\1`pending_visual_pages`\2", fixed)
+        fixed = re.sub(r"`{2,}(rendered_pages|text_extracted_pages|visually_checked_pages|unrendered_pages|pending_visual_pages)`{2,}", r"`\1`", fixed)
     
         # 4. 接回因公式換行斷裂的行（同一清單項目或段落內奇數個 $ 斷行修復）
         lines = fixed.split("\n")
@@ -277,7 +286,7 @@ class ReportHtmlPlugin(StagePlugin):
         return lookup
 
     def clean_subdimension_labels(self, text: str) -> str:
-        """自動移除子維度清單中的冗贅序號/代號前綴（如 '子維度 A：'、'子維度 1：'、'子維度（一）：'）。"""
+        """自動移除子維度清單中的冗贅序號/代號前綴，並將「必考關鍵詞/必考關鍵字/關鍵詞」統一正規化為「關鍵字」。"""
         if not text:
             return ""
         cleaned = re.sub(
@@ -288,6 +297,27 @@ class ReportHtmlPlugin(StagePlugin):
         cleaned = re.sub(
             r"(?m)^([ \t]*[-*+]|\d+\.)[ \t]+子維度\s*[A-Za-z0-9一二三四五六七八九十（）()、.·-]*\s*[：:]\s*",
             r"\1 ",
+            cleaned,
+        )
+        # 將「必考關鍵詞」、「必考關鍵字」、「關鍵詞」統一正規化為「關鍵字」
+        cleaned = re.sub(
+            r"(次領域核心子維度與)必考關鍵[詞字]",
+            r"\1關鍵字",
+            cleaned,
+        )
+        cleaned = re.sub(
+            r"(\*\*\s*)必考(?:核心)?關鍵[詞字]\s*(\*\*\s*[:：])",
+            r"\1關鍵字\2",
+            cleaned,
+        )
+        cleaned = re.sub(
+            r"(\*\*\s*)關鍵詞\s*(\*\*\s*[:：])",
+            r"\1關鍵字\2",
+            cleaned,
+        )
+        cleaned = re.sub(
+            r"(?m)^([ \t]*[-*+]|\d+\.)[ \t]+(?:\*\*\s*)?(?:必考(?:核心)?)?關鍵[詞字](?:\s*\*\*)?[ \t]*[:：]",
+            r"\1 **關鍵字**：",
             cleaned,
         )
         return cleaned
@@ -332,7 +362,7 @@ class ReportHtmlPlugin(StagePlugin):
                 m_law = re.search(r"-\s*\*\*(?:核心法規|核心理論|底層核心)[^*]*\*\*[:：]\s*(.+)", cleaned_body)
                 if m_law:
                     laws = m_law.group(1).strip()
-                m_sub = re.search(r"-\s*\*\*(?:涵蓋子主題|次領域核心子維度|子維度|必考關鍵詞|核心概念)[^*]*\*\*[:：]\s*(.+)", cleaned_body)
+                m_sub = re.search(r"-\s*\*\*(?:涵蓋子主題|次領域核心子維度|子維度|關鍵字|必考關鍵詞|必考關鍵字|關鍵詞|核心概念)[^*]*\*\*[:：]\s*(.+)", cleaned_body)
                 if m_sub:
                     subtopics = m_sub.group(1).strip()
                 m_pat = re.search(r"-\s*\*\*(?:常見命題模式|經典考法與命題型態|經典考法|命題型態|常見考法)[^*]*\*\*[:：]\s*(.+)", cleaned_body)
@@ -360,7 +390,7 @@ class ReportHtmlPlugin(StagePlugin):
             })
         for idx in range(1, len(h2_splits), 2):
             sec_title = h2_splits[idx].strip()
-            sec_body = h2_splits[idx + 1].strip()
+            sec_body = self.clean_subdimension_labels(h2_splits[idx + 1].strip())
             sec_id = f"sec-{idx // 2 + 1}"
 
             # 若為第 2 節（考點地圖與實戰深度剖析），在完整報告視圖中注入導航卡片並預設折疊全文，消除重複動線
@@ -373,7 +403,7 @@ class ReportHtmlPlugin(StagePlugin):
                     '    <span class="sec2-nav-icon">💡</span>\n'
                     '    <div>\n'
                     '      <strong>本章各主題深度剖析已收錄於專屬互動視圖</strong>\n'
-                    '      <p>各考點之次領域核心子維度、必考關鍵詞、經典考法與代表試題，已完整整合至上方【🗂️ 主題考點】視圖，支援手風琴展開與題庫快速篩選。</p>\n'
+                    '      <p>各考點之次領域核心子維度、關鍵字、經典考法與代表試題，已完整整合至上方【🗂️ 主題考點】視圖，支援手風琴展開與題庫快速篩選。</p>\n'
                     '    </div>\n'
                     '  </div>\n'
                     '  <button type="button" class="btn-sm btn-km" onclick="switchView(\'view-topics\')">👉 前往互動式主題考點</button>\n'
@@ -537,11 +567,27 @@ class ReportHtmlPlugin(StagePlugin):
                     else:
                         aligns.append("left")
                 i += 2
+                expected_cols = len(header_cells)
                 rows_html = []
                 while i < n and "|" in lines[i].strip() and not lines[i].strip().startswith("#"):
-                    row_cells = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+                    current_line = lines[i].strip()
+                    row_cells = [c.strip() for c in current_line.strip("|").split("|")]
+                    # 自癒防護：若該行儲存格數量少於預期欄位，且後續行是未閉合儲存格內容，進行向後接合
+                    while len(row_cells) < expected_cols and i + 1 < n and not lines[i + 1].strip().startswith(("#", "---")):
+                        next_line = lines[i + 1].strip()
+                        if "|" in next_line:
+                            current_line = current_line + " " + next_line
+                            row_cells = [c.strip() for c in current_line.strip("|").split("|")]
+                            i += 1
+                        elif next_line and not next_line.startswith(("#", ">", "-", "*", "+")):
+                            current_line = current_line + " " + next_line
+                            row_cells = [c.strip() for c in current_line.strip("|").split("|")]
+                            i += 1
+                        else:
+                            break
                     tds = []
-                    for col_idx, cell in enumerate(row_cells):
+                    for col_idx in range(expected_cols):
+                        cell = row_cells[col_idx] if col_idx < len(row_cells) else ""
                         al = aligns[col_idx] if col_idx < len(aligns) else "left"
                         tds.append(f'<td style="text-align:{al}">{self._render_inline(cell)}</td>')
                     rows_html.append("<tr>" + "".join(tds) + "</tr>")

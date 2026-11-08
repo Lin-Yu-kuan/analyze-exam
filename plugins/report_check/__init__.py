@@ -86,6 +86,22 @@ class ReportCheckPlugin(StagePlugin):
                 corrupted_topics.append(t.get("id") or "未知主題")
         if corrupted_topics:
             raise ValueError(f"主題手風琴內容異常（包含特訓指令/被後續章節誤覆蓋）：{', '.join(corrupted_topics)}")
+
+        # 5. 檢查 HTML 表格結構健康度（防範欄位數不匹配、儲存格斷裂或殘留未解析 Markdown）
+        md_table_blocks = re.findall(r'<table\b[^>]*class=["\'][^"\']*md-table[^"\']*["\'][^>]*>(.*?)</table>', content, re.S)
+        for t_idx, tbl in enumerate(md_table_blocks):
+            thead_m = re.search(r'<thead>(.*?)</thead>', tbl, re.S)
+            th_count = len(re.findall(r'<th\b[^>]*>', thead_m.group(1))) if thead_m else 0
+            if th_count > 0:
+                tbody_m = re.search(r'<tbody>(.*?)</tbody>', tbl, re.S)
+                tbody_html = tbody_m.group(1) if tbody_m else tbl
+                rows = re.findall(r'<tr>(.*?)</tr>', tbody_html, re.S)
+                for r_idx, row in enumerate(rows):
+                    td_count = len(re.findall(r'<td\b[^>]*>', row))
+                    if td_count > 0 and td_count != th_count:
+                        raise ValueError(f"報告中第 {t_idx + 1} 個表格第 {r_idx + 1} 列欄位數異常（表頭 {th_count} 欄，實際 {td_count} 欄），疑似內容斷裂跑版！")
+            if "**" in tbl:
+                raise ValueError(f"報告中第 {t_idx + 1} 個表格內含有未解析的 Markdown 粗體標記 '**'，疑似解析異常！")
     
         return {
             "html_file": html_file,

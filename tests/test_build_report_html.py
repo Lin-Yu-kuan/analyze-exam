@@ -493,6 +493,73 @@ class BuildReportHtmlTests(unittest.TestCase):
         self.assertIn("sec2-fulltext-details", sec2["html"])
         self.assertIn("維度A", sec2["html"])
 
+    def test_repair_latex_escapes_coverage_variables(self) -> None:
+        """驗證因 \\r, \\t, \\v 跳脫吞噬之覆蓋率變數可順利自癒並轉為反引號格式。"""
+        damaged = (
+            "| **圖片渲染覆蓋率 (\r\nendered_pages)** | 240 / 240 頁 |\n"
+            "| **文字擷取覆蓋率 (\\text_extracted_pages)** | 240 / 240 頁 |\n"
+            "| **宿主視覺校驗覆蓋率 (\x0bisually_checked_pages)** | 240 / 240 頁 |\n"
+        )
+        repaired = repair_latex_escapes(damaged)
+        self.assertIn("`rendered_pages`", repaired)
+        self.assertIn("`text_extracted_pages`", repaired)
+        self.assertIn("`visually_checked_pages`", repaired)
+        self.assertNotIn("endered_pages)**", repaired)
+
+    def test_keywords_normalization_to_guanjianzi(self) -> None:
+        """驗證 clean_subdimension_labels 將『必考關鍵詞/必考關鍵字』統一正規化為『關鍵字』。"""
+        text = (
+            "#### 1. 次領域核心子維度與必考關鍵詞\n"
+            "- **DML 查詢**\n"
+            "  - **必考關鍵詞**：INNER JOIN, LEFT JOIN\n"
+            "- **交易管理**\n"
+            "  - **必考關鍵字**：ACID, 2PL\n"
+            "- **正規化**\n"
+            "  - **關鍵詞**：1NF, 2NF, 3NF, BCNF\n"
+        )
+        cleaned = services.report.clean_subdimension_labels(text)
+        self.assertIn("次領域核心子維度與關鍵字", cleaned)
+        self.assertIn("**關鍵字**：INNER JOIN", cleaned)
+        self.assertIn("**關鍵字**：ACID", cleaned)
+        self.assertIn("**關鍵字**：1NF", cleaned)
+        self.assertNotIn("必考關鍵詞", cleaned)
+        self.assertNotIn("必考關鍵字", cleaned)
+
+    def test_render_markdown_block_heals_broken_table_row(self) -> None:
+        """驗證 render_markdown_block 遇到跨行斷裂之儲存格能自動接合并正確對齊表格欄位。"""
+        broken_md = (
+            "| 檢驗維度 | 統計數值 | 狀態評估 |\n"
+            "| :--- | :---: | :--- |\n"
+            "| **圖片渲染覆蓋率 (\n"
+            "endered_pages)** | 240 / 240 頁 | 100% 渲染完成 |\n"
+        )
+        html = services.report.render_markdown_block(broken_md)
+        self.assertIn("<table class=\"md-table\">", html)
+        self.assertIn("<code>rendered_pages</code>", html)
+        # 確保沒有多餘拆出的畸形列
+        self.assertEqual(html.count("<tr>"), 2)  # 1 thead tr + 1 tbody tr
+
+    def test_report_check_detects_broken_table_columns_and_unparsed_markdown(self) -> None:
+        """驗證 check 插件能精準攔截欄位數不符或含未解析 ** 標籤的破損 HTML。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            bad_html = Path(tmp) / "report.html"
+            # 測試案例 1：含未閉合 ** 標記之破損表格
+            content = (
+                '<script id="exam-report-data" type="application/json">{"study_subject":"測試","target_unique_count":0,"all_unique_count":0,"topics":[{"id":"T1"}],"questions":[]}</script>'
+                '<div id="kpi-container"></div><div id="topic-bars-container"><span class="bar-rank-badge"></span></div>'
+                '<div id="topics-accordion-container"><div class="topic-accordion"></div></div>'
+                '<div id="questions-list-container"><div class="q-card"></div></div>'
+                '<div data-km-mode="full" onclick="copyTopicKmPrompt()"></div>'
+                '<table class="md-table"><thead><tr><th>A</th><th>B</th></tr></thead>'
+                '<tbody><tr><td>**破損標籤</td><td>值</td></tr></tbody></table>'
+            )
+            # 寫入體積大於 10KB
+            padded = content + "<!-- padding " + "x" * 10240 + " -->"
+            bad_html.write_text(padded, encoding="utf-8")
+            with self.assertRaises(ValueError) as ctx:
+                services.check.check_report_html(bad_html)
+            self.assertIn("未解析的 Markdown 粗體標記", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

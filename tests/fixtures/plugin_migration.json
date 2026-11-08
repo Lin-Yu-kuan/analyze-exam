@@ -544,7 +544,7 @@
       {
         "id": "sec-1",
         "title": "2. 考點地圖",
-        "html": "<h2>2. 考點地圖</h2>\n\n<div class=\"sec2-nav-banner\">\n  <div class=\"sec2-nav-content\">\n    <span class=\"sec2-nav-icon\">💡</span>\n    <div>\n      <strong>本章各主題深度剖析已收錄於專屬互動視圖</strong>\n      <p>各考點之次領域核心子維度、必考關鍵詞、經典考法與代表試題，已完整整合至上方【🗂️ 主題考點】視圖，支援手風琴展開與題庫快速篩選。</p>\n    </div>\n  </div>\n  <button type=\"button\" class=\"btn-sm btn-km\" onclick=\"switchView('view-topics')\">👉 前往互動式主題考點</button>\n</div>\n<details class=\"sec2-fulltext-details\">\n  <summary class=\"sec2-fulltext-summary\">📖 展開／收合本章原始全文（共 2 個主題考查焦點）</summary>\n  <div class=\"sec2-fulltext-body\">\n<h3>TREE：樹</h3>\n<p>樹的基本操作。</p>\n<h3>GRAPH：圖</h3>\n<p>圖的走訪。</p>\n  </div>\n</details>"
+        "html": "<h2>2. 考點地圖</h2>\n\n<div class=\"sec2-nav-banner\">\n  <div class=\"sec2-nav-content\">\n    <span class=\"sec2-nav-icon\">💡</span>\n    <div>\n      <strong>本章各主題深度剖析已收錄於專屬互動視圖</strong>\n      <p>各考點之次領域核心子維度、關鍵字、經典考法與代表試題，已完整整合至上方【🗂️ 主題考點】視圖，支援手風琴展開與題庫快速篩選。</p>\n    </div>\n  </div>\n  <button type=\"button\" class=\"btn-sm btn-km\" onclick=\"switchView('view-topics')\">👉 前往互動式主題考點</button>\n</div>\n<details class=\"sec2-fulltext-details\">\n  <summary class=\"sec2-fulltext-summary\">📖 展開／收合本章原始全文（共 2 個主題考查焦點）</summary>\n  <div class=\"sec2-fulltext-body\">\n<h3>TREE：樹</h3>\n<p>樹的基本操作。</p>\n<h3>GRAPH：圖</h3>\n<p>圖的走訪。</p>\n  </div>\n</details>"
       }
     ],
     "by_year_target": [
