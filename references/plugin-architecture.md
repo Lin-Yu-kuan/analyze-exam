@@ -36,7 +36,7 @@ flowchart TD
 | report-html | Report HTML | 交付 HTML |
 | revise | Workspace 定位 → Report HTML → Report Check | 回報重建結果與健檢 |
 
-另保留 run-dir、inventory、extract、status、merge、summary、check、clean-images 單步子命令。
+另保留 run-dir、inventory、extract、status、merge、summary、check、clean-images 單步子命令；完整管線與插件依賴對照見 [命令管線矩陣](command-pipeline-matrix.md)。
 命令參數、成果檔預設及錯誤接續方式見 [操作文件](usage.md)。
 不新增工作流狀態機；Python 不自動呼叫宿主 AI 或外部模型，渲染或產生工作包均不代表判讀完成。
 

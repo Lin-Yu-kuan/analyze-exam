@@ -270,13 +270,13 @@ class ReportHtmlPlugin(StagePlugin):
                 laws = ""
                 subtopics = ""
                 patterns = ""
-                m_law = re.search(r"-\s*\*\*核心法規[^*]*\*\*：\s*(.+)", body)
+                m_law = re.search(r"-\s*\*\*(?:核心法規|核心理論|底層核心)[^*]*\*\*[:：]\s*(.+)", body)
                 if m_law:
                     laws = m_law.group(1).strip()
-                m_sub = re.search(r"-\s*\*\*涵蓋子主題[^*]*\*\*：\s*(.+)", body)
+                m_sub = re.search(r"-\s*\*\*(?:涵蓋子主題|次領域核心子維度|子維度|必考關鍵詞|核心概念)[^*]*\*\*[:：]\s*(.+)", body)
                 if m_sub:
                     subtopics = m_sub.group(1).strip()
-                m_pat = re.search(r"-\s*\*\*常見命題模式[^*]*\*\*：\s*(.+)", body)
+                m_pat = re.search(r"-\s*\*\*(?:常見命題模式|經典考法與命題型態|經典考法|命題型態|常見考法)[^*]*\*\*[:：]\s*(.+)", body)
                 if m_pat:
                     patterns = m_pat.group(1).strip()
     

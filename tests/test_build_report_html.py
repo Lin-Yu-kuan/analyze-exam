@@ -431,6 +431,31 @@ class BuildReportHtmlTests(unittest.TestCase):
             self.assertIn('exportUserDataJson', content)
             self.assertIn('importUserDataJson', content)
 
+    def test_parse_report_sections_keyword_variants(self) -> None:
+        """驗證新版與舊版主題細部欄位關鍵字皆可順利解析。"""
+        report_text = (
+            "# 報告\n\n"
+            "## 2. 考點地圖\n\n"
+            "### T1 主題一\n"
+            "- **次領域核心子維度與必考關鍵詞**：維度A, 術語B\n"
+            "- **經典考法與命題型態**：觀念比較題、計算題\n"
+            "- **核心理論**：理論X\n\n"
+            "### T2 主題二\n"
+            "- **涵蓋子主題**：子主題1, 子主題2\n"
+            "- **常見命題模式**：申論申述\n"
+            "- **核心法規**：憲法第8條\n"
+        )
+        res = services.report.parse_report_sections(report_text, ["T1", "T2"])
+        t1 = res["topic_details"]["T1"]
+        self.assertEqual(t1["subtopics"], "維度A, 術語B")
+        self.assertEqual(t1["patterns"], "觀念比較題、計算題")
+        self.assertEqual(t1["laws"], "理論X")
+
+        t2 = res["topic_details"]["T2"]
+        self.assertEqual(t2["subtopics"], "子主題1, 子主題2")
+        self.assertEqual(t2["patterns"], "申論申述")
+        self.assertEqual(t2["laws"], "憲法第8條")
+
 
 if __name__ == "__main__":
     unittest.main()
