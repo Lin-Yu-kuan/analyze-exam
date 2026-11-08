@@ -246,49 +246,78 @@ class ReportHtmlPlugin(StagePlugin):
     
         return lookup
 
+    def clean_subdimension_labels(self, text: str) -> str:
+        """自動移除子維度清單中的冗贅序號/代號前綴（如 '子維度 A：'、'子維度 1：'、'子維度（一）：'）。"""
+        if not text:
+            return ""
+        cleaned = re.sub(
+            r"(\*\*\s*)子維度\s*[A-Za-z0-9一二三四五六七八九十（）()、.·-]*\s*[：:]\s*",
+            r"\1",
+            text,
+        )
+        cleaned = re.sub(
+            r"(?m)^([ \t]*[-*+]|\d+\.)[ \t]+子維度\s*[A-Za-z0-9一二三四五六七八九十（）()、.·-]*\s*[：:]\s*",
+            r"\1 ",
+            cleaned,
+        )
+        return cleaned
+
     def parse_report_sections(self, report_md: str, topic_ids: list[str]) -> dict[str, Any]:
         """無損拆解 report.md 章節，並將第 2 節各主題解析自動對應至 topic_id。"""
         text = self.repair_latex_escapes(report_md).replace("\r\n", "\n").replace("\r", "\n")
         topic_details: dict[str, dict[str, Any]] = {}
-    
+
+        # 優先定位第 2 節（考點地圖與實戰深度剖析）內文範圍，避免被後續章節（如特訓指令）覆蓋
+        topic_map_text = text
+        m_sec2 = re.search(r"^##\s+(?:2[.\s]|.*考點地圖)[^\n]*\n([\s\S]*?)(?=(?:^##\s+\d|\Z))", text, flags=re.MULTILINE)
+        if m_sec2:
+            topic_map_text = m_sec2.group(1)
+
         # 依 ### 標題切分，尋找包含 topic_id 的段落
-        h3_splits = re.split(r"(?m)^###\s+(.+)$", text)
+        h3_splits = re.split(r"(?m)^###\s+(.+)$", topic_map_text)
         for idx in range(1, len(h3_splits), 2):
             heading = h3_splits[idx].strip()
             body = h3_splits[idx + 1].strip()
             # 截斷到下一個 ## 二級標題之前
             body = re.split(r"(?m)^##\s+", body, maxsplit=1)[0].strip()
             body = re.sub(r"\n---\s*$", "", body).strip()
-    
+
+            # 排除特訓指令或延伸學習標題
+            if re.search(r"特訓指令|延伸學習|knowledge-map", heading):
+                continue
+
             matched_tid = None
             for tid in topic_ids:
                 if re.search(rf"\b{re.escape(tid)}\b", heading):
                     matched_tid = tid
                     break
-            if matched_tid:
-                # 萃取關鍵欄位供知識地圖橋接器與卡片標籤使用（若無則不強求，保持彈性）
+            # 僅在尚未記錄時寫入，防止後方同名標題誤覆蓋
+            if matched_tid and matched_tid not in topic_details:
+                # 清洗子維度代號（如子維度 A：）
+                cleaned_body = self.clean_subdimension_labels(body)
+
                 laws = ""
                 subtopics = ""
                 patterns = ""
-                m_law = re.search(r"-\s*\*\*(?:核心法規|核心理論|底層核心)[^*]*\*\*[:：]\s*(.+)", body)
+                m_law = re.search(r"-\s*\*\*(?:核心法規|核心理論|底層核心)[^*]*\*\*[:：]\s*(.+)", cleaned_body)
                 if m_law:
                     laws = m_law.group(1).strip()
-                m_sub = re.search(r"-\s*\*\*(?:涵蓋子主題|次領域核心子維度|子維度|必考關鍵詞|核心概念)[^*]*\*\*[:：]\s*(.+)", body)
+                m_sub = re.search(r"-\s*\*\*(?:涵蓋子主題|次領域核心子維度|子維度|必考關鍵詞|核心概念)[^*]*\*\*[:：]\s*(.+)", cleaned_body)
                 if m_sub:
                     subtopics = m_sub.group(1).strip()
-                m_pat = re.search(r"-\s*\*\*(?:常見命題模式|經典考法與命題型態|經典考法|命題型態|常見考法)[^*]*\*\*[:：]\s*(.+)", body)
+                m_pat = re.search(r"-\s*\*\*(?:常見命題模式|經典考法與命題型態|經典考法|命題型態|常見考法)[^*]*\*\*[:：]\s*(.+)", cleaned_body)
                 if m_pat:
                     patterns = m_pat.group(1).strip()
-    
+
                 topic_details[matched_tid] = {
                     "heading": heading,
-                    "markdown": body,
-                    "html": self.render_markdown_block(body),
+                    "markdown": cleaned_body,
+                    "html": self.render_markdown_block(cleaned_body),
                     "laws": laws,
                     "subtopics": subtopics,
                     "patterns": patterns,
                 }
-    
+
         # 將整份 report.md 依 ## 二級標題切分為導覽區塊
         h2_splits = re.split(r"(?m)^##\s+(.+)$", text)
         intro_md = h2_splits[0].strip()
@@ -308,7 +337,7 @@ class ReportHtmlPlugin(StagePlugin):
                 "title": sec_title,
                 "html": self.render_markdown_block(f"## {sec_title}\n\n{sec_body}"),
             })
-    
+
         return {
             "topic_details": topic_details,
             "sections": sections,
@@ -842,7 +871,18 @@ class ReportHtmlPlugin(StagePlugin):
             else self.statistics.summarize(index_data, examples=2, target=None)
         )
         extraction_data = self.storage.read_json(extraction_file) if extraction_file.is_file() else None
-    
+
+        # 自癒機制：若 summary/index 未指定 target_exam，自動從 report.md 首節提取目標考試並重新聚合
+        target_in_summary = summary_target.get("target_exam") if summary_target else None
+        target_in_index = index_data.get("target_exam")
+        if not target_in_summary and not target_in_index and report_md:
+            m_target = re.search(r"-\s*\*\*(?:針對目標考試|核心目標考試|目標考試)[^*]*\*\*[:：]\s*([^\n]+)", report_md)
+            if m_target:
+                raw_target = m_target.group(1).strip()
+                if raw_target and "未指定" not in raw_target:
+                    self._info(f"自動自 report.md 識別並設定目標考試：{raw_target}")
+                    summary_target = self.statistics.summarize(index_data, examples=2, target=raw_target)
+
         payload = self.build_compact_payload(
             run_dir=run_dir,
             report_path=report_file,

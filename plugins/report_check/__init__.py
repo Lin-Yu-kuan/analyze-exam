@@ -77,6 +77,15 @@ class ReportCheckPlugin(StagePlugin):
         sync_report_html = (repo_root / "report.html").is_file() if repo_root else False
         safe_subj = re.sub(r'[\\/*?:"<>|]', "_", str(study_subject).strip())
         named_report_html = (repo_root / f"{safe_subj}_考點分析報告.html").is_file() if repo_root else False
+
+        # 4. 檢查主題手風琴內容健康度（防止被 knowledge-map 特訓指令惡意覆蓋或為空）
+        corrupted_topics = []
+        for t in topics:
+            t_html = t.get("html") or ""
+            if "knowledge-map-learning" in t_html or "特訓指令" in t_html:
+                corrupted_topics.append(t.get("id") or "未知主題")
+        if corrupted_topics:
+            raise ValueError(f"主題手風琴內容異常（包含特訓指令/被後續章節誤覆蓋）：{', '.join(corrupted_topics)}")
     
         return {
             "html_file": html_file,

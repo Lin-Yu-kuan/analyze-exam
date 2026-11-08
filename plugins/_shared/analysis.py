@@ -93,10 +93,16 @@ def _analysis_config(selection: dict[str, Any], topics: list[dict]) -> dict[str,
 def validate_target(target: Any) -> None:
     if target is None or isinstance(target, str):
         return
+    if isinstance(target, list):
+        if not target:
+            return
+        for item in target:
+            validate_target(item)
+        return
     if isinstance(target, dict) and target and set(target) <= {"exam_name", "category", "year"}:
         if all((type(v) is int if k == "year" else isinstance(v, str) and bool(v.strip())) for k, v in target.items()):
             return
-    raise ValueError("target_exam 應為 null、完整考試名稱或 exam_name/category/year 的精確條件物件")
+    raise ValueError("target_exam 應為 null、完整考試名稱、條件物件或其列表")
 
 def _token_match(target_token: str, text: str) -> bool:
     """支援子字串與公職考科別名之智慧模糊比對。"""
@@ -115,10 +121,43 @@ def _token_match(target_token: str, text: str) -> bool:
                 return True
     return False
 
+def _matches_single_target_string(ref: dict, target_str: str) -> bool:
+    """比對單一目標考試字串（內部以空白或斜槓拆解之 tokens 採 AND 邏輯）。"""
+    cleaned = target_str.strip()
+    if not cleaned or cleaned.lower() == "null":
+        return True
+    # 單一目標考試內部以空白或斜線拆分精確維度（如 "高考三級 資訊處理"）
+    tokens = [t.strip() for t in re.split(r"[/|\s]+", cleaned) if t.strip()]
+    if not tokens:
+        return True
+    for token in tokens:
+        if token.isdigit() or re.match(r"^\d{2,3}年?$", token):
+            y_str = re.sub(r"\D", "", token)
+            if y_str and str(ref.get("year") or "") == y_str:
+                continue
+        exam = str(ref.get("exam_name") or "")
+        cat = str(ref.get("category") or "")
+        subj = str(ref.get("official_subject") or "")
+        rel = str(ref.get("relative_path") or "")
+
+        token_matched = (
+            _token_match(token, exam)
+            or _token_match(token, cat)
+            or _token_match(token, subj)
+            or _token_match(token, rel)
+        )
+        if not token_matched:
+            return False
+    return True
+
 def matches_target(ref: dict, target: Any) -> bool:
-    """比對試卷 metadata 是否符合目標考試條件，支援複合字串、類科及多別名容錯。"""
+    """比對試卷 metadata 是否符合目標考試條件，支援多目標考試聯集 (OR)、類科及別名容錯。"""
     if target is None:
         return True
+    if isinstance(target, list):
+        if not target:
+            return True
+        return any(matches_target(ref, item) for item in target)
     if isinstance(target, dict):
         for k, v in target.items():
             if v is None:
@@ -141,31 +180,12 @@ def matches_target(ref: dict, target: Any) -> bool:
     if not target_str or target_str.lower() == "null":
         return True
 
-    # 複合字串以常見分隔符號拆解（例如 "公務人員高等考試三級 / 資訊處理"）
-    tokens = [t.strip() for t in re.split(r"[/|、,，\s]+", target_str) if t.strip()]
-    if not tokens:
-        return True
+    # 若字串以頓號、逗號、分號、換行或「或」連接多個獨立目標考試，視為聯集 (OR)
+    or_candidates = [c.strip() for c in re.split(r"[、，,;；\n]+|\s+或\s+", target_str) if c.strip()]
+    if len(or_candidates) > 1:
+        return any(_matches_single_target_string(ref, c) for c in or_candidates)
 
-    for token in tokens:
-        if token.isdigit() or re.match(r"^\d{2,3}年?$", token):
-            y_str = re.sub(r"\D", "", token)
-            if y_str and str(ref.get("year") or "") == y_str:
-                continue
-        exam = str(ref.get("exam_name") or "")
-        cat = str(ref.get("category") or "")
-        subj = str(ref.get("official_subject") or "")
-        rel = str(ref.get("relative_path") or "")
-
-        token_matched = (
-            _token_match(token, exam)
-            or _token_match(token, cat)
-            or _token_match(token, subj)
-            or _token_match(token, rel)
-        )
-        if not token_matched:
-            return False
-
-    return True
+    return _matches_single_target_string(ref, target_str)
 
 def _load_extraction(extraction: dict | None, sources: dict[str, dict]) -> set[tuple[str, int]] | None:
     """讀取文字擷取狀態；只有實際 text_extracted 的頁才算有文字。"""
