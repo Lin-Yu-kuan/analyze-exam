@@ -31,13 +31,33 @@ python scripts/skill.py check "D:/題庫/_analysis/資料結構/本次/report.ht
 ```
 
 - `scan` 依序建立唯一目錄、盤點，stdout 回傳 JSON，含 `run_dir` 與 `inventory`；支援 `--manifest` 與 `--output-root`。尚未確認備考科目時可先用「盤點」作工作目錄名稱。
-- 盤點後宿主與使用者確認 selection；渲染後宿主看圖建立 topics；prepare／packet 產生工作包後，宿主逐批保存 results 與 visual-review。命令成功不代表 AI 已完成判讀。
+- 盤點後宿主固定出 3 題與使用者確認 selection（Q1 備考科目名稱、Q2 試卷編號多選、Q3 目標考試／等別／類科；已在指令中指定者略過）；渲染後宿主看圖建立 topics；prepare／packet 產生工作包後，宿主逐批保存 results 與 visual-review。命令成功不代表 AI 已完成判讀。
 - `finalize` 依序執行 merge／summary，讀取 run-dir 下的 work.json；可用 `--work` 改指定。未明確指定 visual-review 或 extraction 時，僅採用同一 run-dir 已存在的對應檔案。
 - results 必須明確列出，不掃描猜測結果檔；全部命中有效快取時才可不提供。保留 `--fast-verify`、`--require-complete`、`--target` 與 `--examples` 語意。
 - finalize 固定寫出同目錄的 question-index.json 與 summary.json，開始前先確認兩者都不存在。任一步驟失敗即停止，已完成成果保留，不回滾；例如合併成功但統計失敗，可使用 summary 子命令接續。
 - 宿主依 summary 撰寫 report.md；只在使用者要求時呼叫 report-html。revise 只使用既有成果，不重新盤點、看圖或分類。
 - 保留來源唯讀、雜湊快取及既有資料 schema；不新增工作流狀態檔或自動 resume 排程。
 - 成功回傳 0；一般失敗或參數錯誤回傳 2，check 健檢失敗回傳 1。錯誤寫入 stderr。
+
+### 盤點後固定詢問與使用者回覆範例
+
+`scan` 產出盤點結果後，宿主呈報官方科目分群清單，並固定提出以下 3 題以組裝 `selection.json`（若使用者起始指令已指定則略過相應題目）：
+
+```text
+📋 題庫盤點已完成：
+[1] 資料結構（108-112 年，共 5 份試卷）
+[2] 資料結構與資料庫（110-113 年合科卷，共 4 份試卷）
+[3] 科目待確認檔案（2 份試卷，檔名未含明確考科）
+
+請確認以下 3 個設定以建立分析選取（selection）：
+Q1. 本次備考科目名稱：（預設建議：資料結構）
+Q2. 要納入分析的試卷編號（多選）：（請填編號，例如 1,2 或 1,2,3）
+Q3. 目標考試／等別／類科（選填）：（例如：高考三級 資訊處理；無特定目標請填「無」）
+```
+
+使用者回覆範例：
+`Q1: 資料結構, Q2: 1, 2, Q3: 高考三級資訊處理` 或簡答 `1. 資料結構 2. 1,2 3. 無`。
+宿主隨即保存 `selection.json` 並接續執行 `render`。
 
 ## 執行目錄
 

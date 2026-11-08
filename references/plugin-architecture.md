@@ -29,7 +29,7 @@ flowchart TD
 
 | 命令 | 步驟 | 交接 |
 |---|---|---|
-| scan | Workspace 建立目錄 → Inventory | 宿主與使用者確認 selection |
+| scan | Workspace 建立目錄 → Inventory | 宿主出固定 3 題確認 selection（備考科目／選取編號／目標考試） |
 | render | Render | 宿主看圖抽樣、建立 topics |
 | prepare／packet | Prepare／Packet | 宿主逐批判讀並保存結果與 visual-review |
 | finalize | Merge → Summary | 宿主依 summary 撰寫 report.md |
