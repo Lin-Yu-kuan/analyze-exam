@@ -103,6 +103,36 @@ class ReportHtmlPlugin(StagePlugin):
         # 修復 \\rceil（例如 \\lceil M/2 \\n ceil$）
         fixed = re.sub(r"(?:\r?\n)[ \t]*ceil\$", lambda m: " \\rceil$", fixed)
         fixed = re.sub(r"(?<=\s)ceil\$", lambda m: "\\rceil$", fixed)
+
+        # 4. 修復因環境變數擴展（如 PowerShell 雙引號執行）遺失之常見 TeX 變數前綴與符號（具備冪等性）
+        # 4.1 關聯綱要 R(...) 遺失 $R
+        fixed = re.sub(r"(?<=[：:、，,\s])(?<!\$)\(([A-Z](?:,\s*[A-Z])+)\)\$", lambda m: f"$R({m.group(1)})$", fixed)
+        fixed = re.sub(r"給定關聯綱要\s+\(([A-Z](?:,\s*[A-Z])+)\)", lambda m: f"給定關聯綱要 $R({m.group(1)})$", fixed)
+        # 4.2 函數相依集遺失 $F
+        fixed = re.sub(r"及一組函數相依集\s*\$(?!\s*F\$)", lambda m: "及一組函數相依集 $F$", fixed)
+        fixed = re.sub(r"檢驗\s*\$(?!\s*F\$)\s*中的每條相依性", lambda m: "檢驗 $F$ 中的每條相依性", fixed)
+        # 4.3 屬性閉包遺失 $X^+
+        fixed = re.sub(r"屬性閉包（\s*\^\+\s*\$?\s*）", lambda m: "屬性閉包（$X^+$）", fixed)
+        fixed = re.sub(r"（如\s+\^\+\s*=\s*\\\{", lambda m: "（如 $X^+ = \\{", fixed)
+        fixed = re.sub(r"(?<![A-Za-z0-9_\$])\^\+\s*=\s*\\\{", lambda m: "$X^+ = \\{", fixed)
+        # 4.4 函數相依性 X -> Y 遺失 $X
+        fixed = re.sub(r"每條相依性\s+\\to\s*([A-Za-z0-9_]+)\$", lambda m: f"每條相依性 $X \\to {m.group(1)}$", fixed)
+        fixed = re.sub(r"每條相依性\s+\\to\s*([A-Za-z0-9_]+)", lambda m: f"每條相依性 $X \\to {m.group(1)}", fixed)
+        # 4.5 遺失「$X$ 為超鍵」或「$Y$ 為主屬性」
+        fixed = re.sub(r"違反「\$(?!\s*X\$)\s*為超鍵」", lambda m: "違反「$X$ 為超鍵」", fixed)
+        fixed = re.sub(r"「\$(?!\s*Y\$)\s*為主屬性」", lambda m: "「$Y$ 為主屬性」", fixed)
+        # 4.6 交易處理並行控制排程變數修復
+        fixed = re.sub(r"給定\s*,\s*T_2", lambda m: "給定 $T_1, T_2", fixed)
+        fixed = re.sub(r"同物件之\s*-W,\s*W-R,\s*W-W\$", lambda m: "同物件之 $R-W, W-R, W-W$", fixed)
+        fixed = re.sub(r"在圖上畫出有向邊\s+\\to\s*([A-Za-z0-9_]+)\$", lambda m: f"在圖上畫出有向邊 $T_i \\to {m.group(1)}$", fixed)
+        fixed = re.sub(r"在圖上畫出有向邊\s+\\to\s*([A-Za-z0-9_]+)", lambda m: f"在圖上畫出有向邊 $T_i \\to {m.group(1)}", fixed)
+        fixed = re.sub(r"如\s+\\to\s*(T_\d+)\s*\\to\s*(T_\d+)\$", lambda m: f"如 $T_1 \\to {m.group(1)} \\to {m.group(2)}$", fixed)
+        fixed = re.sub(r"拓撲排序為\s+\\to\s*([A-Za-z0-9_]+)\$", lambda m: f"拓撲排序為 $T_i \\to {m.group(1)}$", fixed)
+        fixed = re.sub(r"拓撲排序為\s+\\to\s*([A-Za-z0-9_]+)", lambda m: f"拓撲排序為 $T_i \\to {m.group(1)}", fixed)
+        # 4.7 候選項目集 C_k 與頻繁項目集 L_k
+        fixed = re.sub(r"候選項目集（\$\s*）與頻繁項目集（\$\s*）", lambda m: "候選項目集（$C_k$）與頻繁項目集（$L_k$）", fixed)
+        # 4.8 搜尋效率 O(\log_B N)
+        fixed = re.sub(r"搜尋效率\s+\(\\log", lambda m: "搜尋效率 $O(\\log", fixed)
     
         # 4. 接回因公式換行斷裂的行（同一清單項目或段落內奇數個 $ 斷行修復）
         lines = fixed.split("\n")
@@ -332,10 +362,35 @@ class ReportHtmlPlugin(StagePlugin):
             sec_title = h2_splits[idx].strip()
             sec_body = h2_splits[idx + 1].strip()
             sec_id = f"sec-{idx // 2 + 1}"
+
+            # 若為第 2 節（考點地圖與實戰深度剖析），在完整報告視圖中注入導航卡片並預設折疊全文，消除重複動線
+            if sec_id == "sec-2" or re.search(r"考點地圖|Topic Map", sec_title):
+                rendered_body = self.render_markdown_block(sec_body)
+                topic_cnt = len(topic_details)
+                nav_banner = (
+                    '<div class="sec2-nav-banner">\n'
+                    '  <div class="sec2-nav-content">\n'
+                    '    <span class="sec2-nav-icon">💡</span>\n'
+                    '    <div>\n'
+                    '      <strong>本章各主題深度剖析已收錄於專屬互動視圖</strong>\n'
+                    '      <p>各考點之次領域核心子維度、必考關鍵詞、經典考法與代表試題，已完整整合至上方【🗂️ 主題考點】視圖，支援手風琴展開與題庫快速篩選。</p>\n'
+                    '    </div>\n'
+                    '  </div>\n'
+                    '  <button type="button" class="btn-sm btn-km" onclick="switchView(\'view-topics\')">👉 前往互動式主題考點</button>\n'
+                    '</div>\n'
+                    '<details class="sec2-fulltext-details">\n'
+                    f'  <summary class="sec2-fulltext-summary">📖 展開／收合本章原始全文（共 {topic_cnt} 個主題考查焦點）</summary>\n'
+                    f'  <div class="sec2-fulltext-body">\n{rendered_body}\n  </div>\n'
+                    '</details>'
+                )
+                sec_html = f"<h2>{html.escape(sec_title)}</h2>\n\n{nav_banner}"
+            else:
+                sec_html = self.render_markdown_block(f"## {sec_title}\n\n{sec_body}")
+
             sections.append({
                 "id": sec_id,
                 "title": sec_title,
-                "html": self.render_markdown_block(f"## {sec_title}\n\n{sec_body}"),
+                "html": sec_html,
             })
 
         return {
@@ -365,7 +420,13 @@ class ReportHtmlPlugin(StagePlugin):
             return save_ph(f'<span class="katex-math-display">$${raw_math}$$</span>')
     
         def repl_inline_math(m: re.Match) -> str:
-            raw_math = html.escape(m.group(1).strip(), quote=False)
+            raw_content = m.group(1).strip()
+            # 若內容包含 3 個以上繁中且完全不含任何反斜線或數學符號，判定為錯位標記，不包裹為 KaTeX 標籤
+            cjk_count = len(re.findall(r"[\u4e00-\u9fff]", raw_content))
+            has_math_sym = bool(re.search(r"[\\+=<>_^\-/\*()]", raw_content))
+            if cjk_count >= 3 and not has_math_sym:
+                return f"${html.escape(raw_content, quote=False)}$"
+            raw_math = html.escape(raw_content, quote=False)
             return save_ph(f'<span class="katex-math-inline">${raw_math}$</span>')
     
         text = re.sub(r"\$\$([^\$\n]+?)\$\$", repl_display_math, text)

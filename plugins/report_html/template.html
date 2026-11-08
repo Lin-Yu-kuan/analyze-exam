@@ -792,6 +792,65 @@ body {
 }
 .md-table th { background: var(--bg-muted); font-weight: 700; }
 
+/* 完整報告視圖中 sec-2 導航橫幅與折疊容器 */
+.sec2-nav-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: var(--accent-light);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 14px 0 16px;
+}
+.sec2-nav-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.sec2-nav-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+.sec2-nav-content strong {
+    font-size: 0.95rem;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 3px;
+}
+.sec2-nav-content p {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.45;
+}
+.sec2-fulltext-details {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+.sec2-fulltext-summary {
+    padding: 12px 16px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    background: var(--bg-muted);
+    user-select: none;
+    transition: background 0.15s;
+}
+.sec2-fulltext-summary:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+}
+.sec2-fulltext-body {
+    padding: 18px 22px;
+    border-top: 1px solid var(--border);
+}
+
 /* 知識地圖橋接專區 */
 .km-hero {
     background: linear-gradient(135deg, var(--accent-light), var(--purple-light));
@@ -2894,22 +2953,15 @@ function buildFullKmPromptText(topicList, customTitleNote) {
     });
 
     const essayInstruction = (activeKmMode === 'essay_focus')
-        ? '\n3. **申論題攻堅導向（特化要求）**：\n   - 請針對所列主題之各節點，特別加強「申論題三段論法（前言法理爭點／主文法條與大法官判決涵攝／結語制度革新評析）」的結構性論述訓練。\n   - 思考題直接改編為國家考試高分申論擬答框架思考題。'
+        ? '\n\n### 申論題攻堅導向（特化要求）：\n- 請針對所列主題之各節點，加強「申論題三段論法（前言法理爭點／主文法條與理論涵攝／結語革新評析）」的結構性論述訓練。\n- 思考題直接改編為國家考試高分申論擬答框架思考題。'
         : '';
 
     return `/knowledge-map-learning 我想以國考「${DATA.study_subject}」（目標考試：${targetDesc}）為主題進行由上而下的系統化精讀${customTitleNote || ''}。
 
 請直接參考這份已完成的考古題深度分析報告：@[${getEffectiveReportPath()}]
 
-### 課程規劃與認識論對接要求：
-1. **依據國考 ROI 權重與寬節點拆分原則建立大綱**：
-   下方為本次實證分析的考點權重結構。請將高題數的大主題（如包含多個獨立制度的子主題）自動拆分為粒度適中、可獨立推理的 \`M<模組>-<節點>\` 葉節點，並在第一回合直接輸出結構化大綱且**同回合無縫展開 M1-1 深度講義與思考題**！
-2. **四層認識論結合國考實證素材**：
-   - **核心問題與制度痛點**：剖析該制度或法條要解決的治理困境。
-   - **直覺心智模型**：用具象化架構建立法制與學理直覺。
-   - **機制／法條／釋字證據**：直接扣合報告中的必背法條與大法官解釋／憲法法庭判決。
-   - **適用條件與命題陷阱邊界**：點破考生最常混淆的法條比較（如核定 vs 備查、覆議 vs 復議、罰則上限等）。
-   - **遷移式開放思考題**：以歷屆高鑑別度真題情境改編為課後思考題。${essayInstruction}
+### 課程規劃要求：
+- **依據國考實證考點權重建立大綱**：請參考下方實證考點權重結構，將各主題細拆為粒度適中、可獨立推理的 \`M<模組>-<節點>\` 葉節點，並在第一回合輸出完整結構化大綱且**同回合無縫展開 M1-1 深度講義與思考題**！${essayInstruction}
 
 ### 實證考點權重藍圖（已選 ${topicList.length} 個主題）：
 ${outlineLines.join('\n')}`;

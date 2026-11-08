@@ -456,6 +456,43 @@ class BuildReportHtmlTests(unittest.TestCase):
         self.assertEqual(t2["patterns"], "申論申述")
         self.assertEqual(t2["laws"], "憲法第8條")
 
+    def test_repair_latex_escapes_recovers_missing_variables(self) -> None:
+        """驗證因 PowerShell 雙引號展開遺失之 LaTeX 變數可順利自癒。"""
+        damaged = (
+            "給定關聯綱要 (A, B, C, D, E)$ 及一組函數相依集 $，第一小題求所有候選鍵；"
+            "必須詳列屬性閉包計算過程（如 ^+ = \\{A, B, C, D, E\\}$）；"
+            "檢驗 $ 中的每條相依性 \\to Y$，指出何者違反「$ 為超鍵」或「$ 為主屬性」；"
+            "給定 , T_2, T_3$ 排程，衝突操作（同物件之 -W, W-R, W-W$），在圖上畫出有向邊 \\to T_j$；"
+            "拓撲排序為 \\to T_j$，搜尋效率 (\\log_B N)$。"
+        )
+        repaired = repair_latex_escapes(damaged)
+        self.assertIn("$R(A, B, C, D, E)$", repaired)
+        self.assertIn("及一組函數相依集 $F$", repaired)
+        self.assertIn("$X^+ = \\{A, B, C, D, E\\}$", repaired)
+        self.assertIn("每條相依性 $X \\to Y$", repaired)
+        self.assertIn("「$X$ 為超鍵」", repaired)
+        self.assertIn("「$Y$ 為主屬性」", repaired)
+        self.assertIn("給定 $T_1, T_2, T_3$", repaired)
+        self.assertIn("同物件之 $R-W, W-R, W-W$", repaired)
+        self.assertIn("有向邊 $T_i \\to T_j$", repaired)
+        self.assertIn("拓撲排序為 $T_i \\to T_j$", repaired)
+        self.assertIn("搜尋效率 $O(\\log_B N)$", repaired)
+
+    def test_sec2_navigation_and_details_rendering(self) -> None:
+        """驗證完整報告視圖中 sec-2 自動包裝導航橫幅與 details 折疊容器。"""
+        report_text = (
+            "# 報告\n\n"
+            "## 1. 範圍與限制\n\n範圍說明\n\n"
+            "## 2. 考點地圖與實戰深度剖析\n\n"
+            "### T1 主題一\n- **次領域核心子維度與必考關鍵詞**：維度A\n"
+        )
+        res = services.report.parse_report_sections(report_text, ["T1"])
+        sec2 = [s for s in res["sections"] if s["id"] == "sec-2"][0]
+        self.assertIn("sec2-nav-banner", sec2["html"])
+        self.assertIn("switchView('view-topics')", sec2["html"])
+        self.assertIn("sec2-fulltext-details", sec2["html"])
+        self.assertIn("維度A", sec2["html"])
+
 
 if __name__ == "__main__":
     unittest.main()
