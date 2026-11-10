@@ -4,3 +4,8 @@ __pycache__/
 *.tmp
 tests-run.log
 cli-test.log
+
+# --- 技能倉庫治理（由 manage.py init 加入） ---
+.coverage
+*.bak
+*.bak-*

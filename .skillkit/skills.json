@@ -1,0 +1,42 @@
+{
+  "repository": "https://github.com/Lin-Yu-kuan/analyze-exam",
+  "schema": 1,
+  "skills": [
+    {
+      "category": "exam",
+      "name": "analyze-exam-subject",
+      "params": [
+        {
+          "description": "一般分析模式需提供來源資料夾；-revise 模式不需要重新提供分析輸入",
+          "name": "<題庫PDF資料夾>",
+          "requirement": "條件必填"
+        },
+        {
+          "description": "選用既有報告重新生成與健檢模式；使用時必須提供 _analysis 或題庫路徑，不重新分析",
+          "name": "-revise <路徑>",
+          "requirement": "選填"
+        },
+        {
+          "description": "一般分析來源唯讀時提供可寫入的輸出根目錄，由 Agent 傳給 run-dir 工具",
+          "name": "--output-root <目錄>",
+          "requirement": "選填"
+        }
+      ],
+      "path": "analyze-exam-subject",
+      "sha256": "96a42adb6ffb1f2b65047f2c14b60f5774c24905b277acd2597e5086d5961d3b",
+      "triggers": [
+        "題庫分析",
+        "考古題",
+        "考點地圖",
+        "PDF 盤點"
+      ],
+      "type": "package",
+      "update_url": "https://raw.githubusercontent.com/Lin-Yu-kuan/analyze-exam/main/analyze-exam-subject/SKILL.md",
+      "usage": [
+        "/analyze-exam-subject \"<題庫PDF資料夾>\"",
+        "/analyze-exam-subject -revise \"<_analysis或題庫路徑>\""
+      ],
+      "version": "2.0.0"
+    }
+  ]
+}

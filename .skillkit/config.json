@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/Lin-Yu-kuan/analyze-exam",
+  "branch": "main",
+  "site_name": "analyze-exam",
+  "skills_dir": "~/.gemini/config/skills",
+  "author": "Lin-Yu-kuan"
+}

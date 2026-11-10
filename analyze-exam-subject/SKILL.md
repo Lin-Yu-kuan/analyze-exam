@@ -8,8 +8,8 @@ description: >-
   當使用者提供本機考古題 PDF 資料夾，要求整理考點、命題分布或準備建議時使用。讓使用者將不同官方科目歸入同一備考科目，再依實際題目產出報告；不負責爬取考題。
   亦支援在帶有「-revise」旗標與「_analysis」路徑時，跳過題庫分析直接重新生成與健檢 HTML 報告；維護更新不屬於分析觸發範圍。
 triggers: ["題庫分析", "考古題", "考點地圖", "PDF 盤點"]
-repository: https://github.com/Lin-Yu-kuan/mySkill-private
-update_url: https://raw.githubusercontent.com/Lin-Yu-kuan/mySkill-private/main/analyze-exam-subject/SKILL.md
+repository: https://github.com/Lin-Yu-kuan/analyze-exam
+update_url: https://raw.githubusercontent.com/Lin-Yu-kuan/analyze-exam/main/analyze-exam-subject/SKILL.md
 usage:
   - '/analyze-exam-subject "<題庫PDF資料夾>"'
   - '/analyze-exam-subject -revise "<_analysis或題庫路徑>"'
@@ -102,7 +102,7 @@ params:
 
 <!-- BEGIN:SHARED-CONTRACT（由治理工具自動注入，請勿手改） -->
 
-# 共用行為準則（所有 mySkill-private 技能一體適用）
+# 共用行為準則（所有 analyze-exam 技能一體適用）
 
 - **先確認再破壞**：執行刪除、覆寫、安裝、更新等不可逆操作前，先確認目標路徑與影響範圍；無法確認時先詢問使用者。
 - **失敗就說失敗**：網路請求失敗、下載內容不完整或雜湊驗證不符時，如實回報原因並停止，不得回報成功。
@@ -117,7 +117,7 @@ params:
 
 維護或擴充時讀 [插件架構與驗證](references/plugin-architecture.md)。2.0.0 起僅保留插件版；舊分散腳本入口已移除，所有命令改走統一入口，既有分析成果格式保持相容。
 
-`version` 是本機版本；更新來源的版本與 SHA-256 記在 `.skillkit/skills.json`（`https://raw.githubusercontent.com/Lin-Yu-kuan/mySkill-private/main/.skillkit/skills.json`）。當使用者要求「更新此技能」或「檢查最新版本」時：
+`version` 是本機版本；更新來源的版本與 SHA-256 記在 `.skillkit/skills.json`（`https://raw.githubusercontent.com/Lin-Yu-kuan/analyze-exam/main/.skillkit/skills.json`）。當使用者要求「更新此技能」或「檢查最新版本」時：
 
 1. **比對版本**：讀取 `skills.json` 中本技能的 `version`，與本機相同時回報「已是最新版本（vX.Y.Z）」即結束，不覆寫任何檔案。
 2. **下載並驗證**：版本不同時下載 `update_url` 內容，計算 SHA-256，必須與 manifest 的 `sha256` 一致；不符即中止。
@@ -126,5 +126,5 @@ params:
 5. **驗證與還原**：確認新檔案齊全且 `name`、`version` 正確後才刪除備份；下載失敗或內容不完整時，立即中止並還原備份。
 6. **回報差異**：只回報「v舊 → v新」與變更章節摘要；版本號未變但內容有差異時，如實告知。
 7. **不靜默覆寫**：使用者未明確要求更新時，先確認再動作。
-8. **私有倉庫**：若 `raw.githubusercontent.com` 取用失敗（404），改用 `gh api repos/Lin-Yu-kuan/mySkill-private/contents/analyze-exam-subject/SKILL.md` 或 `git pull` 取得，不得略過雜湊驗證。
+8. **私有倉庫**：若 `raw.githubusercontent.com` 取用失敗（404），改用 `gh api repos/Lin-Yu-kuan/analyze-exam/contents/analyze-exam-subject/SKILL.md` 或 `git pull` 取得，不得略過雜湊驗證。
 
